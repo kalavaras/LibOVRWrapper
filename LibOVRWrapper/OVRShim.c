@@ -1,5 +1,4 @@
-#include <string.h>
-#include "../LibOVR/Include/OVR_CAPI.h"
+#include "stdafx.h"
 
 #if !defined(OVR_DLL_BUILD)
 	#define OVR_DLL_BUILD

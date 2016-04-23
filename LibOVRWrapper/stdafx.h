@@ -19,10 +19,10 @@
 // Windows Header Files:
 #include <windows.h>
 
-// TODO: reference additional headers your program requires here
-#include "OVR_CAPI.h"
-#include "OVR_Version.h"
-#include "OVR_ErrorCode.h"
+// reference additional headers your program requires here
+#include "../LibOVR/Include/OVR_CAPI.h"
+#include "../LibOVR/Include/OVR_Version.h"
+#include "../LibOVR/Include/OVR_ErrorCode.h"
 
-#include "OVR_CAPI_D3D.h"   
-#include "OVR_CAPI_GL.h"  
+#include "../LibOVR/Include/OVR_CAPI_D3D.h"   
+#include "../LibOVR/Include/OVR_CAPI_GL.h"  
