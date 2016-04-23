@@ -121,12 +121,12 @@ OVR_PUBLIC_FUNCTION(void) ovr_RecenterPose(ovrSession session) {
 	ovr_RecenterTrackingOrigin1_3((ovrSession1_3)session);
 }
 
-void copyPose(ovrPosef* dest, ovrPosef1_3* source) {
+void copyPose(ovrPosef* dest, const ovrPosef1_3* source) {
 	dest->Orientation = source->Orientation;
 	dest->Position = source->Position;
 }
 
-void copyPoseState(ovrPoseStatef* dest, ovrPoseStatef1_3* source) {
+void copyPoseState(ovrPoseStatef* dest, const ovrPoseStatef1_3* source) {
 	dest->AngularAcceleration = source->AngularAcceleration;
 	dest->AngularVelocity = source->AngularVelocity;
 	dest->LinearAcceleration = source->LinearAcceleration;
