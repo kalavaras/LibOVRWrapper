@@ -149,7 +149,7 @@ OVR_PUBLIC_FUNCTION(ovrTrackingState) ovr_GetTrackingState(ovrSession session, d
 	r.HandStatusFlags[0] = state.HandStatusFlags[0];
 	r.HandStatusFlags[1] = state.HandStatusFlags[1];
 
-	copyPose(&(r.HeadPose), &(state.HeadPose));
+	copyPoseState(&(r.HeadPose), &(state.HeadPose));
 
 	//r.LastCameraFrameCounter not filled
 
