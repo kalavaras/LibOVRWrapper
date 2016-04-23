@@ -47,7 +47,7 @@
 /// \see ovr_GetTextureSwapChainBufferDX
 /// \see ovr_DestroyTextureSwapChain
 ///
-OVR_PUBLIC_FUNCTION(ovrResult) ovr_CreateTextureSwapChainDX(ovrSession1_3 session,
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_CreateTextureSwapChainDX1_3(ovrSession1_3 session,
                                                             IUnknown* d3dPtr,
                                                             const ovrTextureSwapChainDesc1_3* desc,
                                                             ovrTextureSwapChain1_3* out_TextureSwapChain);
@@ -71,7 +71,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_CreateTextureSwapChainDX(ovrSession1_3 sessio
 ///         ovr_GetTextureSwapChainBuffer(session, chain, 1, IID_PPV_ARGS(&dxgiResource));
 ///     \endcode
 ///
-OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetTextureSwapChainBufferDX(ovrSession1_3 session,
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetTextureSwapChainBufferDX1_3(ovrSession1_3 session,
                                                                ovrTextureSwapChain1_3 chain,
                                                                int index,
                                                                IID iid,
@@ -105,7 +105,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetTextureSwapChainBufferDX(ovrSession1_3 ses
 /// \see ovr_GetMirrorTextureBufferDX
 /// \see ovr_DestroyMirrorTexture
 ///
-OVR_PUBLIC_FUNCTION(ovrResult) ovr_CreateMirrorTextureDX(ovrSession1_3 session,
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_CreateMirrorTextureDX1_3(ovrSession1_3 session,
                                                          IUnknown* d3dPtr,
                                                          const ovrMirrorTextureDesc1_3* desc,
                                                          ovrMirrorTexture1_3* out_MirrorTexture);
@@ -120,7 +120,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_CreateMirrorTextureDX(ovrSession1_3 session,
 /// \return Returns an ovrResult indicating success or failure. In the case of failure, use 
 ///         ovr_GetLastErrorInfo to get more information.
 ///
-OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetMirrorTextureBufferDX(ovrSession1_3 session,
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetMirrorTextureBufferDX1_3(ovrSession1_3 session,
                                                             ovrMirrorTexture1_3 mirrorTexture,
                                                             IID iid,
                                                             void** out_Buffer);

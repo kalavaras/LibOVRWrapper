@@ -6,6 +6,7 @@
 
 #include "../LibOVR0.8/Include/OVR_CAPI_0_8_0.h"
 
+#include "shimhelper.h"
 #include "OVRShim.h"
 
 OVR_PUBLIC_FUNCTION(ovrResult) ovr_Initialize(const ovrInitParams* params) {
@@ -185,4 +186,136 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetInputState(ovrSession session, unsigned in
 	inputState->Touches = state.Touches;
 
 	return res;
+}
+
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_SetControllerVibration(ovrSession session, unsigned int controllerTypeMask,
+	float frequency, float amplitude) {
+	return ovr_SetControllerVibration1_3((ovrSession1_3)session, controllerTypeMask, frequency, amplitude);
+}
+
+OVR_PUBLIC_FUNCTION(void) ovr_DestroySwapTextureSet(ovrSession session, ovrSwapTextureSet* textureSet) {
+	ovr_DestroyTextureSwapChain1_3((ovrSession1_3)session, getChain((ovrSession1_3)session));
+}
+
+OVR_PUBLIC_FUNCTION(void) ovr_DestroyMirrorTexture(ovrSession session, ovrTexture* mirrorTexture) {
+	ovr_DestroyMirrorTexture1_3((ovrSession1_3)session, (ovrMirrorTexture1_3)(mirrorTexture->PlatformData[0]));
+}
+
+OVR_PUBLIC_FUNCTION(ovrSizei) ovr_GetFovTextureSize(ovrSession session, ovrEyeType eye, ovrFovPort fov,
+	float pixelsPerDisplayPixel) {
+	ovrFovPort1_3 fport;
+	fport.DownTan = fov.DownTan;
+	fport.LeftTan = fov.LeftTan;
+	fport.RightTan = fov.RightTan;
+	fport.UpTan = fov.UpTan;
+
+	return ovr_GetFovTextureSize1_3((ovrSession1_3)session, eye, fport, pixelsPerDisplayPixel);
+}
+
+OVR_PUBLIC_FUNCTION(ovrEyeRenderDesc) ovr_GetRenderDesc(ovrSession session,
+	ovrEyeType eyeType, ovrFovPort fov) {
+
+	ovrFovPort1_3 fport;
+	fport.DownTan = fov.DownTan;
+	fport.LeftTan = fov.LeftTan;
+	fport.RightTan = fov.RightTan;
+	fport.UpTan = fov.UpTan;
+
+	ovrEyeRenderDesc1_3 desc = ovr_GetRenderDesc1_3((ovrSession1_3)session, eyeType, fport);
+
+	ovrEyeRenderDesc r;
+
+	r.DistortedViewport = desc.DistortedViewport;
+	r.Eye = desc.Eye;
+	r.Fov.DownTan = desc.Fov.DownTan;
+	r.Fov.LeftTan = desc.Fov.LeftTan;
+	r.Fov.RightTan = desc.Fov.RightTan;
+	r.Fov.UpTan = desc.Fov.UpTan;
+	r.HmdToEyeViewOffset = desc.HmdToEyeOffset;
+	r.PixelsPerTanAngleAtCenter = desc.PixelsPerTanAngleAtCenter;
+	
+	return r;
+}
+
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_SubmitFrame(ovrSession session, long long frameIndex,
+	const ovrViewScaleDesc* viewScaleDesc,
+	ovrLayerHeader const * const * layerPtrList, unsigned int layerCount) {
+
+	//ovrLayerType 2, 6 do not exists anymore. max layer count is 16 instead of 32
+	if (layerCount > 16) {
+		return ovrError_InvalidParameter;
+	}
+
+	for (unsigned int i = 0;i < layerCount;i++) {
+		const ovrLayerHeader* layer = layerPtrList[i];
+
+		if (layer->Type == ovrLayerType_Direct || layer->Type == ovrLayerType_EyeFovDepth) {
+			return ovrError_InvalidParameter;
+		}
+		
+		ovr_CommitTextureSwapChain1_3((ovrSession1_3)session, getChain((ovrSession1_3)session));
+		//need to call ovr_GetTextureSwapChainCurrentIndex and ovr_CommitTextureSwapChain
+	}
+
+	return ovr_SubmitFrame1_3((ovrSession1_3)session, frameIndex, (const ovrViewScaleDesc1_3*)viewScaleDesc, (ovrLayerHeader1_3 const * const *)layerPtrList, layerCount);
+}
+
+OVR_PUBLIC_FUNCTION(double) ovr_GetPredictedDisplayTime(ovrSession session, long long frameIndex) {
+	return ovr_GetPredictedDisplayTime1_3((ovrSession1_3)session, frameIndex);
+}
+
+OVR_PUBLIC_FUNCTION(double) ovr_GetTimeInSeconds() {
+	return ovr_GetTimeInSeconds1_3();
+}
+
+OVR_PUBLIC_FUNCTION(void) ovr_ResetBackOfHeadTracking(ovrSession session) {
+	//nothing
+}
+
+OVR_PUBLIC_FUNCTION(void) ovr_ResetMulticameraTracking(ovrSession session) {
+	//nothing
+}
+
+OVR_PUBLIC_FUNCTION(ovrBool) ovr_GetBool(ovrSession session, const char* propertyName, ovrBool defaultVal) {
+	return ovr_GetBool1_3((ovrSession1_3)session, propertyName, defaultVal);
+}
+
+OVR_PUBLIC_FUNCTION(ovrBool) ovr_SetBool(ovrSession session, const char* propertyName, ovrBool value) {
+	return ovr_SetBool1_3((ovrSession1_3)session, propertyName, value);
+}
+
+OVR_PUBLIC_FUNCTION(int) ovr_GetInt(ovrSession session, const char* propertyName, int defaultVal) {
+	return ovr_GetInt1_3((ovrSession1_3)session, propertyName, defaultVal);
+}
+
+OVR_PUBLIC_FUNCTION(ovrBool) ovr_SetInt(ovrSession session, const char* propertyName, int value) {
+	return ovr_SetInt1_3((ovrSession1_3)session, propertyName, value);
+}
+
+OVR_PUBLIC_FUNCTION(float) ovr_GetFloat(ovrSession session, const char* propertyName, float defaultVal) {
+	return ovr_GetFloat1_3((ovrSession1_3)session, propertyName, defaultVal);
+}
+
+OVR_PUBLIC_FUNCTION(ovrBool) ovr_SetFloat(ovrSession session, const char* propertyName, float value) {
+	return ovr_SetFloat1_3((ovrSession1_3)session, propertyName, value);
+}
+
+OVR_PUBLIC_FUNCTION(unsigned int) ovr_GetFloatArray(ovrSession session, const char* propertyName,
+	float values[], unsigned int valuesCapacity) {
+	return ovr_GetFloatArray1_3((ovrSession1_3)session, propertyName, values, valuesCapacity);
+}
+
+OVR_PUBLIC_FUNCTION(ovrBool) ovr_SetFloatArray(ovrSession session, const char* propertyName,
+	const float values[], unsigned int valuesSize) {
+	return ovr_SetFloatArray1_3((ovrSession1_3)session, propertyName, values, valuesSize);
+}
+
+OVR_PUBLIC_FUNCTION(const char*) ovr_GetString(ovrSession session, const char* propertyName,
+	const char* defaultVal) {
+	return ovr_GetString1_3((ovrSession1_3)session, propertyName, defaultVal);
+}
+
+OVR_PUBLIC_FUNCTION(ovrBool) ovr_SetString(ovrSession session, const char* propertyName,
+	const char* value) {
+	return ovr_SetString1_3((ovrSession1_3)session, propertyName, value);
 }

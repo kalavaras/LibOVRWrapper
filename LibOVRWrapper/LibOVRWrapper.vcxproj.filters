@@ -27,6 +27,9 @@
     <ClInclude Include="OVRShim.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="shimhelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -36,6 +39,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="OVRShim.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OVRShim_D3D.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="shimhelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
