@@ -71,7 +71,15 @@ OVR_PUBLIC_FUNCTION(ovrHmdDesc) ovr_GetHmdDesc(ovrSession session) {
 }
 
 OVR_PUBLIC_FUNCTION(ovrResult) ovr_Create(ovrSession* pSession, ovrGraphicsLuid* pLuid) {
-	return ovr_Create1_3((ovrSession1_3*)pSession, (ovrGraphicsLuid1_3*)pLuid);
+	ovrResult r = ovr_Create1_3((ovrSession1_3*)pSession, (ovrGraphicsLuid1_3*)pLuid);
+
+	if (!OVR_SUCCESS(r)) {
+		return r;
+	}
+
+	ovr_SetTrackingOriginType1_3(*(ovrSession1_3*)pSession, ovrTrackingOrigin1_3_EyeLevel);
+
+	return r;
 }
 
 OVR_PUBLIC_FUNCTION(void) ovr_Destroy(ovrSession session) {
