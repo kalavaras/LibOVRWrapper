@@ -194,7 +194,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_SetControllerVibration(ovrSession session, un
 }
 
 OVR_PUBLIC_FUNCTION(void) ovr_DestroySwapTextureSet(ovrSession session, ovrSwapTextureSet* textureSet) {
-	ovr_DestroyTextureSwapChain1_3((ovrSession1_3)session, getChain((ovrSession1_3)session));
+	ovr_DestroyTextureSwapChain1_3((ovrSession1_3)session, *getChain((ovrSession1_3)session));
 }
 
 OVR_PUBLIC_FUNCTION(void) ovr_DestroyMirrorTexture(ovrSession session, ovrTexture* mirrorTexture) {
@@ -252,8 +252,8 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_SubmitFrame(ovrSession session, long long fra
 		if (layer->Type == ovrLayerType_Direct || layer->Type == ovrLayerType_EyeFovDepth) {
 			return ovrError_InvalidParameter;
 		}
-		
-		ovr_CommitTextureSwapChain1_3((ovrSession1_3)session, getChain((ovrSession1_3)session));
+
+		ovr_CommitTextureSwapChain1_3((ovrSession1_3)session, *getChain((ovrSession1_3)session));
 		//need to call ovr_GetTextureSwapChainCurrentIndex and ovr_CommitTextureSwapChain
 	}
 
@@ -293,10 +293,21 @@ OVR_PUBLIC_FUNCTION(ovrBool) ovr_SetInt(ovrSession session, const char* property
 }
 
 OVR_PUBLIC_FUNCTION(float) ovr_GetFloat(ovrSession session, const char* propertyName, float defaultVal) {
+	if (strcmp(propertyName, OVR_KEY_IPD) == 0) {
+		float values[2];
+		ovr_GetFloatArray1_3((ovrSession1_3)session, OVR_KEY_NECK_TO_EYE_DISTANCE_1_3, values, 2);
+
+		return values[0] + values[1];
+	}
+
 	return ovr_GetFloat1_3((ovrSession1_3)session, propertyName, defaultVal);
 }
 
 OVR_PUBLIC_FUNCTION(ovrBool) ovr_SetFloat(ovrSession session, const char* propertyName, float value) {
+	if (strcmp(propertyName, OVR_KEY_IPD) == 0) {
+		return ovrFalse;
+	}
+
 	return ovr_SetFloat1_3((ovrSession1_3)session, propertyName, value);
 }
 

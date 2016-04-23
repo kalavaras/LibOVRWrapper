@@ -5,6 +5,12 @@ extern "C" HRESULT wrapCreateShaderResourceView(ID3D11Device* device, ID3D11Reso
 	return device->CreateShaderResourceView(resource, NULL, srv);
 }
 
-extern "C" ovrTextureSwapChain1_3 getChain(ovrSession1_3 session) {
-	return NULL; //TODO
+ovrTextureSwapChain1_3* globalChain;
+
+extern "C" ovrTextureSwapChain1_3* getChain(ovrSession1_3 session) {
+	return globalChain; //TODO
+}
+
+extern "C" void setChain(ovrSession1_3 session, ovrTextureSwapChain1_3* chain) {
+	globalChain = chain;
 }
