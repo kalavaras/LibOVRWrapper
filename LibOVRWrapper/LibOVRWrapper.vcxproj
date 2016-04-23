@@ -100,6 +100,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>d3d11.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>copy $(SolutionDir)$(Configuration)\LibOVR*.* "$(SolutionDir)OculusRoomTiny (DX11)\Bin\Windows\Win32\Debug\VS2015"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -178,6 +181,7 @@
     </ClCompile>
     <ClCompile Include="OVRShim.c" />
     <ClCompile Include="OVRShim_D3D.c" />
+    <ClCompile Include="OVRShim_GL.c" />
     <ClCompile Include="shimhelper.cpp" />
     <ClCompile Include="stdafx.cpp" />
   </ItemGroup>

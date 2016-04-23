@@ -7,7 +7,7 @@ extern "C" HRESULT wrapCreateShaderResourceView(ID3D11Device* device, ID3D11Reso
 
 ovrTextureSwapChain1_3* globalChain;
 
-extern "C" ovrTextureSwapChain1_3* getChain(ovrSession1_3 session) {
+extern "C" _declspec(dllexport) ovrTextureSwapChain1_3* getChain(ovrSession1_3 session) {
 	return globalChain; //TODO
 }
 

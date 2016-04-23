@@ -1,5 +1,10 @@
 #include "stdafx.h"
 
+#undef OVR_PUBLIC_FUNCTION
+#undef OVR_PUBLIC_CLASS
+#undef OVR_PRIVATE_FUNCTION
+#undef OVR_PRIVATE_CLASS
+
 #if !defined(OVR_DLL_BUILD)
 #define OVR_DLL_BUILD
 #endif
@@ -155,7 +160,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_CreateMirrorTextureD3D11(ovrSession session,
 	ovrtext.D3D11.Header.TextureSize.w = d.Width;
 	ovrtext.D3D11.Header.TextureSize.h = d.Height;
 
-	*outMirrorTexture = &ovrtext;
+	*outMirrorTexture = (ovrTexture*)&ovrtext;
 
 	return result;
 

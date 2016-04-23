@@ -35,7 +35,7 @@
 /// \see ovr_GetTextureSwapChainBufferGL
 /// \see ovr_DestroyTextureSwapChain
 ///
-OVR_PUBLIC_FUNCTION(ovrResult) ovr_CreateTextureSwapChainGL(ovrSession1_3 session,
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_CreateTextureSwapChainGL1_3(ovrSession1_3 session,
                                                             const ovrTextureSwapChainDesc1_3* desc,
                                                             ovrTextureSwapChain1_3* out_TextureSwapChain);
 
@@ -50,7 +50,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_CreateTextureSwapChainGL(ovrSession1_3 sessio
 /// \return Returns an ovrResult indicating success or failure. In the case of failure, use 
 ///         ovr_GetLastErrorInfo to get more information.
 ///
-OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetTextureSwapChainBufferGL(ovrSession1_3 session,
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetTextureSwapChainBufferGL1_3(ovrSession1_3 session,
                                                                ovrTextureSwapChain1_3 chain,
                                                                int index,
                                                                unsigned int* out_TexId);
@@ -78,7 +78,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetTextureSwapChainBufferGL(ovrSession1_3 ses
 /// \see ovr_GetMirrorTextureBufferGL
 /// \see ovr_DestroyMirrorTexture
 ///
-OVR_PUBLIC_FUNCTION(ovrResult) ovr_CreateMirrorTextureGL(ovrSession1_3 session,
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_CreateMirrorTextureGL1_3(ovrSession1_3 session,
                                                          const ovrMirrorTextureDesc1_3* desc,
                                                          ovrMirrorTexture1_3* out_MirrorTexture);
 
@@ -91,7 +91,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_CreateMirrorTextureGL(ovrSession1_3 session,
 /// \return Returns an ovrResult indicating success or failure. In the case of failure, use 
 ///         ovr_GetLastErrorInfo to get more information.
 ///
-OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetMirrorTextureBufferGL(ovrSession1_3 session,
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetMirrorTextureBufferGL1_3(ovrSession1_3 session,
                                                             ovrMirrorTexture1_3 mirrorTexture,
                                                             unsigned int* out_TexId);
 

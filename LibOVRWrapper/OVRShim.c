@@ -1,5 +1,10 @@
 #include "stdafx.h"
 
+#undef OVR_PUBLIC_FUNCTION
+#undef OVR_PUBLIC_CLASS
+#undef OVR_PRIVATE_FUNCTION
+#undef OVR_PRIVATE_CLASS
+
 #if !defined(OVR_DLL_BUILD)
 	#define OVR_DLL_BUILD
 #endif
@@ -239,10 +244,10 @@ OVR_PUBLIC_FUNCTION(ovrEyeRenderDesc) ovr_GetRenderDesc(ovrSession session,
 	r.Fov.LeftTan = desc.Fov.LeftTan;
 	r.Fov.RightTan = desc.Fov.RightTan;
 	r.Fov.UpTan = desc.Fov.UpTan;
-	r.HmdToEyeViewOffset = desc.HmdToEyeOffset;
-	r.PixelsPerTanAngleAtCenter = desc.PixelsPerTanAngleAtCenter;
-	
-	return r;
+r.HmdToEyeViewOffset = desc.HmdToEyeOffset;
+r.PixelsPerTanAngleAtCenter = desc.PixelsPerTanAngleAtCenter;
+
+return r;
 }
 
 OVR_PUBLIC_FUNCTION(ovrResult) ovr_SubmitFrame(ovrSession session, long long frameIndex,
@@ -337,4 +342,12 @@ OVR_PUBLIC_FUNCTION(const char*) ovr_GetString(ovrSession session, const char* p
 OVR_PUBLIC_FUNCTION(ovrBool) ovr_SetString(ovrSession session, const char* propertyName,
 	const char* value) {
 	return ovr_SetString1_3((ovrSession1_3)session, propertyName, value);
+}
+
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_SetQueueAheadFraction(ovrSession session, float queueAheadFraction) {
+	return ovr_SetQueueAheadFraction1_3((ovrSession1_3)session, queueAheadFraction);
+}
+
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_Lookup(const char* name, void** data) {
+	return ovr_Lookup1_3(name, data);
 }

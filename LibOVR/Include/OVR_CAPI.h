@@ -2011,6 +2011,10 @@ OVR_PUBLIC_FUNCTION(ovrBool) ovr_SetString1_3(ovrSession1_3 session, const char*
 
 ///@}
 
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_SetQueueAheadFraction1_3(ovrSession1_3 session, float queueAheadFraction);
+
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_Lookup1_3(const char* name, void** data);
+
 
 
 #ifdef __cplusplus
