@@ -1673,6 +1673,9 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_SubmitFrame(ovrSession session, long long fra
                                                   ovrLayerHeader const * const * layerPtrList, unsigned int layerCount);
 ///@}
 
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetTextureSwapChainCurrentIndex(ovrSession session, ovrSwapTextureSet* textureSet, int* currentIndex);
+
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_CommitTextureSwapChain(ovrSession session, ovrSwapTextureSet* textureSet);
 
 
 //-------------------------------------------------------------------------------------
@@ -1912,7 +1915,6 @@ OVR_PUBLIC_FUNCTION(ovrBool) ovr_SetString(ovrSession session, const char* prope
                                               const char* value);
 
 ///@}
-
 
 
 #ifdef __cplusplus

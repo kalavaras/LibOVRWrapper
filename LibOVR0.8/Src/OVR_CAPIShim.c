@@ -849,6 +849,9 @@ OVR_DECLARE_IMPORT(ovrResult, ovr_SetQueueAheadFraction, (ovrSession session, fl
 
 OVR_DECLARE_IMPORT(ovrResult, ovr_Lookup, (const char* name, void** data));
 
+OVR_DECLARE_IMPORT(ovrResult, ovr_GetTextureSwapChainCurrentIndex, (ovrSession session, ovrSwapTextureSet* textureSet, int* currentIndex));
+OVR_DECLARE_IMPORT(ovrResult, ovr_CommitTextureSwapChain, (ovrSession session, ovrSwapTextureSet* textureSet));
+
 static ovrResult OVR_LoadSharedLibrary(int requestedProductVersion, int requestedMajorVersion)
 {
     FilePathCharType filePath[OVR_MAX_PATH];
@@ -907,6 +910,9 @@ static ovrResult OVR_LoadSharedLibrary(int requestedProductVersion, int requeste
     OVR_GETFUNCTION(ovr_SetQueueAheadFraction)
     OVR_GETFUNCTION(ovr_Lookup)
 
+	OVR_GETFUNCTION(ovr_CommitTextureSwapChain)
+	OVR_GETFUNCTION(ovr_GetTextureSwapChainCurrentIndex)
+
     return ovrSuccess;
 }
 
@@ -958,6 +964,9 @@ static void OVR_UnloadSharedLibrary()
     ovr_DestroyMirrorTexturePtr = NULL;
     ovr_SetQueueAheadFractionPtr = NULL;
     ovr_LookupPtr = NULL;
+
+	ovr_CommitTextureSwapChainPtr = NULL;
+	ovr_GetTextureSwapChainCurrentIndexPtr = NULL;
 
     OVR_CloseLibrary(hLibOVR);
     hLibOVR = NULL;
@@ -1416,6 +1425,14 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_Lookup(const char* name, void** data)
     if (!ovr_LookupPtr)
         return ovrError_NotInitialized;
     return ovr_LookupPtr(name, data);
+}
+
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetTextureSwapChainCurrentIndex(ovrSession session, ovrSwapTextureSet* textureSet, int* currentIndex) {
+	return ovr_GetTextureSwapChainCurrentIndexPtr(session, textureSet, currentIndex);
+}
+
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_CommitTextureSwapChain(ovrSession session, ovrSwapTextureSet* textureSet) {
+	return ovr_CommitTextureSwapChainPtr(session, textureSet);
 }
 
 #if defined(_MSC_VER)

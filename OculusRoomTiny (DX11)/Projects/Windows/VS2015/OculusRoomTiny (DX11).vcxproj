@@ -225,14 +225,14 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <TreatWarningAsError>true</TreatWarningAsError>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
-      <AdditionalIncludeDirectories>D:\ovr_sdk_win_0.8.0.0\OculusSDK\LibOVR/Include/;D:\ovr_sdk_win_0.8.0.0\OculusSDK\Samples\OculusRoomTiny_Advanced\Common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)LibOVR0.8/Include/;D:\ovr_sdk_win_0.8.0.0\OculusSDK\Samples\OculusRoomTiny_Advanced\Common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Manifest>
       <EnableDPIAwareness>PerMonitorHighDPIAware</EnableDPIAwareness>
     </Manifest>
     <Link>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
-      <AdditionalDependencies>D:\ovr_sdk_win_0.8.0.0\OculusSDK\LibOVR/Lib/Windows/$(Platform)/$(Configuration)/VS2015/LibOVR.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)LibOVR0.8/Lib/Windows/$(Platform)/$(Configuration)/VS2015/LibOVR.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

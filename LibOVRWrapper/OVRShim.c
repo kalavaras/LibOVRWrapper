@@ -142,6 +142,11 @@ void copyPose(ovrPosef* dest, const ovrPosef1_3* source) {
 	dest->Position = source->Position;
 }
 
+void copyPoseR(ovrPosef1_3* dest, const ovrPosef* source) {
+	dest->Orientation = source->Orientation;
+	dest->Position = source->Position;
+}
+
 void copyPoseState(ovrPoseStatef* dest, const ovrPoseStatef1_3* source) {
 	dest->AngularAcceleration = source->AngularAcceleration;
 	dest->AngularVelocity = source->AngularVelocity;
@@ -217,7 +222,7 @@ OVR_PUBLIC_FUNCTION(void) ovr_DestroySwapTextureSet(ovrSession session, ovrSwapT
 OVR_PUBLIC_FUNCTION(void) ovr_DestroyMirrorTexture(ovrSession session, ovrTexture* mirrorTexture) {
 	ovrMirrorTexture1_3* mirror = getMirror();
 
-	ovr_DestroyMirrorTexture1_3((ovrSession1_3)session, mirror);
+	ovr_DestroyMirrorTexture1_3((ovrSession1_3)session, *mirror);
 
 	setMirror(NULL);
 }
@@ -267,32 +272,68 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_SubmitFrame(ovrSession session, long long fra
 		return ovrError_InvalidParameter;
 	}
 
+	ovrLayerHeader1_3** newlayers = (ovrLayerHeader1_3**)malloc(sizeof(ovrLayerHeader1_3*) * layerCount);
+	
 	for (unsigned int i = 0;i < layerCount;i++) {
 		const ovrLayerHeader* layer = layerPtrList[i];
+
+		if (layer->Type == ovrLayerType_EyeFov) {
+			const ovrLayerEyeFov* oldelayer = (const ovrLayerEyeFov*)layer;
+			ovrLayerEyeFov1_3 *elayer = (ovrLayerEyeFov1_3*)malloc(sizeof(ovrLayerEyeFov1_3));
+
+			elayer->ColorTexture[0] = *getChain((ovrSession1_3)session, oldelayer->ColorTexture[0]);
+			elayer->ColorTexture[1] = *getChain((ovrSession1_3)session, oldelayer->ColorTexture[1]);
+			
+			elayer->Fov[0].DownTan = oldelayer->Fov[0].DownTan;
+			elayer->Fov[0].LeftTan = oldelayer->Fov[0].LeftTan;
+			elayer->Fov[0].UpTan = oldelayer->Fov[0].UpTan;
+			elayer->Fov[0].RightTan = oldelayer->Fov[0].RightTan;
+			elayer->Fov[1].DownTan = oldelayer->Fov[1].DownTan;
+			elayer->Fov[1].LeftTan = oldelayer->Fov[1].LeftTan;
+			elayer->Fov[1].UpTan = oldelayer->Fov[1].UpTan;
+			elayer->Fov[1].RightTan = oldelayer->Fov[1].RightTan;
+
+			elayer->Header.Flags = oldelayer->Header.Flags;
+			elayer->Header.Type = oldelayer->Header.Type;
+
+			copyPoseR(&elayer->RenderPose[0], &oldelayer->RenderPose[0]);
+			copyPoseR(&elayer->RenderPose[1], &oldelayer->RenderPose[1]);
+
+			elayer->SensorSampleTime = oldelayer->SensorSampleTime;
+			elayer->Viewport[0] = oldelayer->Viewport[0];
+			elayer->Viewport[1] = oldelayer->Viewport[1];
+
+			/*for (int j = 0;j < 2;j++) {
+				ovr_CommitTextureSwapChain1_3((ovrSession1_3)session, elayer->ColorTexture[j]);
+			}*/
+
+			newlayers[i] = (ovrLayerHeader1_3*)elayer;
+		}
 
 		switch (layer->Type) {
 		case ovrLayerType_Direct:
 		case ovrLayerType_EyeFovDepth:
 			return ovrError_InvalidParameter;
-		case ovrLayerType_EyeFov:			
-			for (int j = 0;j < 2;j++) {
+		case ovrLayerType_EyeFov:							
+			/*for (int j = 0;j < 2;j++) {
 				ovr_CommitTextureSwapChain1_3((ovrSession1_3)session, *getChain((ovrSession1_3)session, ((const ovrLayerEyeFov*)layer)->ColorTexture[j]));
-			}
+			}*/
 			break;
 		case ovrLayerType_EyeMatrix:
-			for (int j = 0;j < 2;j++) {
+			/*for (int j = 0;j < 2;j++) {
 				ovr_CommitTextureSwapChain1_3((ovrSession1_3)session, *getChain((ovrSession1_3)session, ((const ovrLayerEyeMatrix*)layer)->ColorTexture[j]));
-			}
+			}*/
 			break;
 		case ovrLayerType_Quad:
-			ovr_CommitTextureSwapChain1_3((ovrSession1_3)session, *getChain((ovrSession1_3)session, ((const ovrLayerQuad*)layer)->ColorTexture));
+			//ovr_CommitTextureSwapChain1_3((ovrSession1_3)session, *getChain((ovrSession1_3)session, ((const ovrLayerQuad*)layer)->ColorTexture));
 			break;
 		}
 
 		//need to call ovr_GetTextureSwapChainCurrentIndex and ovr_CommitTextureSwapChain
 	}
+	
 
-	return ovr_SubmitFrame1_3((ovrSession1_3)session, frameIndex, (const ovrViewScaleDesc1_3*)viewScaleDesc, (ovrLayerHeader1_3 const * const *)layerPtrList, layerCount);
+	return ovr_SubmitFrame1_3((ovrSession1_3)session, frameIndex, (const ovrViewScaleDesc1_3*)viewScaleDesc, newlayers, layerCount);
 }
 
 OVR_PUBLIC_FUNCTION(double) ovr_GetPredictedDisplayTime(ovrSession session, long long frameIndex) {
@@ -372,4 +413,14 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_SetQueueAheadFraction(ovrSession session, flo
 
 OVR_PUBLIC_FUNCTION(ovrResult) ovr_Lookup(const char* name, void** data) {
 	return ovr_Lookup1_3(name, data);
+}
+
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetTextureSwapChainCurrentIndex(ovrSession session, ovrSwapTextureSet* textureSet, int* currentIndex) {
+	ovrTextureSwapChain1_3* chain = getChain((ovrSession1_3)session, textureSet);
+
+	return ovr_GetTextureSwapChainCurrentIndex1_3((ovrSession1_3)session, *chain, currentIndex);
+}
+
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_CommitTextureSwapChain(ovrSession session, ovrSwapTextureSet* textureSet) {
+	return ovr_CommitTextureSwapChain1_3((ovrSession1_3)session, *getChain((ovrSession1_3)session, textureSet));
 }

@@ -211,7 +211,10 @@ static bool MainLoop(bool retryCreate)
 			    pEyeRenderTexture[eye]->AdvanceToNextTexture();
 
 			    // Clear and set up rendertarget
-			    int texIndex = pEyeRenderTexture[eye]->TextureSet->CurrentIndex;
+			    //int texIndex = pEyeRenderTexture[eye]->TextureSet->CurrentIndex;
+				int texIndex;
+				ovr_GetTextureSwapChainCurrentIndex(HMD, pEyeRenderTexture[eye]->TextureSet, &texIndex);
+
 			    DIRECTX.SetAndClearRenderTarget(pEyeRenderTexture[eye]->TexRtv[texIndex], pEyeDepthBuffer[eye]);
 			    DIRECTX.SetViewport((float)eyeRenderViewport[eye].Pos.x, (float)eyeRenderViewport[eye].Pos.y,
 				    (float)eyeRenderViewport[eye].Size.w, (float)eyeRenderViewport[eye].Size.h);
@@ -232,7 +235,11 @@ static bool MainLoop(bool retryCreate)
 				                            p.M[0][3], p.M[1][3], p.M[2][3], p.M[3][3]);
 			    XMMATRIX prod = XMMatrixMultiply(view, proj);
 			    roomScene->Render(&prod, 1, 1, 1, 1, true);
+
+				ovr_CommitTextureSwapChain(HMD, pEyeRenderTexture[eye]->TextureSet);
 		    }
+
+			
         }
 
 		// Initialize our single full screen Fov layer.
