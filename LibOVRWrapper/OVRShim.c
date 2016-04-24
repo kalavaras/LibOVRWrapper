@@ -257,10 +257,10 @@ OVR_PUBLIC_FUNCTION(ovrEyeRenderDesc) ovr_GetRenderDesc(ovrSession session,
 	r.Fov.LeftTan = desc.Fov.LeftTan;
 	r.Fov.RightTan = desc.Fov.RightTan;
 	r.Fov.UpTan = desc.Fov.UpTan;
-r.HmdToEyeViewOffset = desc.HmdToEyeOffset;
-r.PixelsPerTanAngleAtCenter = desc.PixelsPerTanAngleAtCenter;
+	r.HmdToEyeViewOffset = desc.HmdToEyeOffset;
+	r.PixelsPerTanAngleAtCenter = desc.PixelsPerTanAngleAtCenter;
 
-return r;
+	return r;
 }
 
 OVR_PUBLIC_FUNCTION(ovrResult) ovr_SubmitFrame(ovrSession session, long long frameIndex,
@@ -303,33 +303,64 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_SubmitFrame(ovrSession session, long long fra
 			elayer->Viewport[0] = oldelayer->Viewport[0];
 			elayer->Viewport[1] = oldelayer->Viewport[1];
 
-			/*for (int j = 0;j < 2;j++) {
+			for (int j = 0;j < 2;j++) {
 				ovr_CommitTextureSwapChain1_3((ovrSession1_3)session, elayer->ColorTexture[j]);
-			}*/
+			}
 
 			newlayers[i] = (ovrLayerHeader1_3*)elayer;
 		}
+		else if (layer->Type == ovrLayerType_EyeMatrix) {
+			const ovrLayerEyeMatrix* oldelayer = (const ovrLayerEyeMatrix*)layer;
+			ovrLayerEyeMatrix1_3 *elayer = (ovrLayerEyeMatrix1_3*)malloc(sizeof(ovrLayerEyeMatrix1_3));
 
-		switch (layer->Type) {
-		case ovrLayerType_Direct:
-		case ovrLayerType_EyeFovDepth:
+			elayer->ColorTexture[0] = *getChain((ovrSession1_3)session, oldelayer->ColorTexture[0]);
+			elayer->ColorTexture[1] = *getChain((ovrSession1_3)session, oldelayer->ColorTexture[1]);
+
+			elayer->Matrix[0] = oldelayer->Matrix[0];
+			elayer->Matrix[1] = oldelayer->Matrix[1];			
+
+			elayer->Header.Flags = oldelayer->Header.Flags;
+			elayer->Header.Type = oldelayer->Header.Type;
+
+			copyPoseR(&elayer->RenderPose[0], &oldelayer->RenderPose[0]);
+			copyPoseR(&elayer->RenderPose[1], &oldelayer->RenderPose[1]);
+
+			elayer->SensorSampleTime = oldelayer->SensorSampleTime;
+			elayer->Viewport[0] = oldelayer->Viewport[0];
+			elayer->Viewport[1] = oldelayer->Viewport[1];
+
+			for (int j = 0;j < 2;j++) {
+				ovr_CommitTextureSwapChain1_3((ovrSession1_3)session, elayer->ColorTexture[j]);
+			}
+
+			newlayers[i] = (ovrLayerHeader1_3*)elayer;
+		}
+		else if (layer->Type == ovrLayerType_Quad) {
+			const ovrLayerQuad* oldelayer = (const ovrLayerQuad*)layer;
+			ovrLayerQuad1_3 *elayer = (ovrLayerQuad1_3*)malloc(sizeof(ovrLayerQuad1_3));
+
+			elayer->ColorTexture = *getChain((ovrSession1_3)session, oldelayer->ColorTexture);
+			
+			copyPoseR(&elayer->QuadPoseCenter, &oldelayer->QuadPoseCenter);
+
+			elayer->QuadSize = oldelayer->QuadSize;
+
+			ovr_CommitTextureSwapChain1_3((ovrSession1_3)session, elayer->ColorTexture);
+
+			newlayers[i] = (ovrLayerHeader1_3*)elayer;
+		}
+		else if (layer->Type == ovrLayerType_Disabled) {			
+			ovrLayerHeader1_3 *elayer = (ovrLayerHeader1_3*)malloc(sizeof(ovrLayerHeader1_3));
+
+			elayer->Flags = layer->Flags;
+			elayer->Type = layer->Type;
+
+			newlayers[i] = (ovrLayerHeader1_3*)elayer;
+		}
+		else {
 			return ovrError_InvalidParameter;
-		case ovrLayerType_EyeFov:							
-			/*for (int j = 0;j < 2;j++) {
-				ovr_CommitTextureSwapChain1_3((ovrSession1_3)session, *getChain((ovrSession1_3)session, ((const ovrLayerEyeFov*)layer)->ColorTexture[j]));
-			}*/
-			break;
-		case ovrLayerType_EyeMatrix:
-			/*for (int j = 0;j < 2;j++) {
-				ovr_CommitTextureSwapChain1_3((ovrSession1_3)session, *getChain((ovrSession1_3)session, ((const ovrLayerEyeMatrix*)layer)->ColorTexture[j]));
-			}*/
-			break;
-		case ovrLayerType_Quad:
-			//ovr_CommitTextureSwapChain1_3((ovrSession1_3)session, *getChain((ovrSession1_3)session, ((const ovrLayerQuad*)layer)->ColorTexture));
-			break;
 		}
 
-		//need to call ovr_GetTextureSwapChainCurrentIndex and ovr_CommitTextureSwapChain
 	}
 	
 
