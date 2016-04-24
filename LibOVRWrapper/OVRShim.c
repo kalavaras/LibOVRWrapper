@@ -213,10 +213,10 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_SetControllerVibration(ovrSession session, un
 	return ovr_SetControllerVibration1_3((ovrSession1_3)session, controllerTypeMask, frequency, amplitude);
 }
 
-OVR_PUBLIC_FUNCTION(void) ovr_DestroySwapTextureSet(ovrSession session, ovrSwapTextureSet* textureSet) {
-	removeChain((ovrSession1_3)session, textureSet);
-
+OVR_PUBLIC_FUNCTION(void) ovr_DestroySwapTextureSet(ovrSession session, ovrSwapTextureSet* textureSet) {	
 	ovr_DestroyTextureSwapChain1_3((ovrSession1_3)session, *getChain((ovrSession1_3)session, textureSet));
+
+	removeChain((ovrSession1_3)session, textureSet);
 }
 
 OVR_PUBLIC_FUNCTION(void) ovr_DestroyMirrorTexture(ovrSession session, ovrTexture* mirrorTexture) {
