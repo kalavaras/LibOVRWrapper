@@ -37,7 +37,7 @@ struct OculusTexture
 {
     ovrHmd                   hmd;
 	ovrSwapTextureSet      * TextureSet;
-    static const int         TextureCount = 2;
+    static const int         TextureCount = 3;
 	ID3D11RenderTargetView * TexRtv[TextureCount];
 
     OculusTexture() :

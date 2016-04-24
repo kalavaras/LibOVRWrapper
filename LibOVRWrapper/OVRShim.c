@@ -15,6 +15,8 @@
 #include "OVRShim.h"
 
 OVR_PUBLIC_FUNCTION(ovrResult) ovr_Initialize(const ovrInitParams* params) {
+	initChains();
+
 	return ovr_Initialize1_3((ovrInitParams1_3*)params);
 }
 
@@ -207,11 +209,17 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_SetControllerVibration(ovrSession session, un
 }
 
 OVR_PUBLIC_FUNCTION(void) ovr_DestroySwapTextureSet(ovrSession session, ovrSwapTextureSet* textureSet) {
-	ovr_DestroyTextureSwapChain1_3((ovrSession1_3)session, *getChain((ovrSession1_3)session));
+	removeChain((ovrSession1_3)session, textureSet);
+
+	ovr_DestroyTextureSwapChain1_3((ovrSession1_3)session, *getChain((ovrSession1_3)session, textureSet));
 }
 
 OVR_PUBLIC_FUNCTION(void) ovr_DestroyMirrorTexture(ovrSession session, ovrTexture* mirrorTexture) {
-	ovr_DestroyMirrorTexture1_3((ovrSession1_3)session, (ovrMirrorTexture1_3)(mirrorTexture->PlatformData[0]));
+	ovrMirrorTexture1_3* mirror = getMirror();
+
+	ovr_DestroyMirrorTexture1_3((ovrSession1_3)session, mirror);
+
+	setMirror(NULL);
 }
 
 OVR_PUBLIC_FUNCTION(ovrSizei) ovr_GetFovTextureSize(ovrSession session, ovrEyeType eye, ovrFovPort fov,
@@ -262,11 +270,25 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_SubmitFrame(ovrSession session, long long fra
 	for (unsigned int i = 0;i < layerCount;i++) {
 		const ovrLayerHeader* layer = layerPtrList[i];
 
-		if (layer->Type == ovrLayerType_Direct || layer->Type == ovrLayerType_EyeFovDepth) {
+		switch (layer->Type) {
+		case ovrLayerType_Direct:
+		case ovrLayerType_EyeFovDepth:
 			return ovrError_InvalidParameter;
+		case ovrLayerType_EyeFov:			
+			for (int j = 0;j < 2;j++) {
+				ovr_CommitTextureSwapChain1_3((ovrSession1_3)session, *getChain((ovrSession1_3)session, ((const ovrLayerEyeFov*)layer)->ColorTexture[j]));
+			}
+			break;
+		case ovrLayerType_EyeMatrix:
+			for (int j = 0;j < 2;j++) {
+				ovr_CommitTextureSwapChain1_3((ovrSession1_3)session, *getChain((ovrSession1_3)session, ((const ovrLayerEyeMatrix*)layer)->ColorTexture[j]));
+			}
+			break;
+		case ovrLayerType_Quad:
+			ovr_CommitTextureSwapChain1_3((ovrSession1_3)session, *getChain((ovrSession1_3)session, ((const ovrLayerQuad*)layer)->ColorTexture));
+			break;
 		}
 
-		ovr_CommitTextureSwapChain1_3((ovrSession1_3)session, *getChain((ovrSession1_3)session));
 		//need to call ovr_GetTextureSwapChainCurrentIndex and ovr_CommitTextureSwapChain
 	}
 

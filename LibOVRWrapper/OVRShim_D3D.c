@@ -71,6 +71,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_CreateSwapTextureSetD3D11(ovrSession session,
 		d.MiscFlags |= ovrTextureMisc_DX_Typeless;
 	}
 	
+	BOOL makeShaderView = 0;
 	d.BindFlags = 0;
 	if (desc->BindFlags & D3D11_BIND_RENDER_TARGET) {
 		d.BindFlags |= ovrTextureBind_DX_RenderTarget;
@@ -81,43 +82,50 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_CreateSwapTextureSetD3D11(ovrSession session,
 	if (desc->BindFlags & D3D11_BIND_DEPTH_STENCIL) {
 		d.BindFlags |= ovrTextureBind_DX_DepthStencil;
 	}
+	if (desc->BindFlags & D3D11_BIND_SHADER_RESOURCE) {
+		makeShaderView = 1;
+	}	
 	
 	d.StaticImage = ovrFalse;
 
-	ovrTextureSwapChain1_3 chain;
+	ovrTextureSwapChain1_3* chain = (ovrTextureSwapChain1_3*)malloc(sizeof(ovrTextureSwapChain1_3));
 
-	ovrResult result = ovr_CreateTextureSwapChainDX1_3((ovrSession1_3)session, (IUnknown*)device, &d, &chain);
+	ovrResult result = ovr_CreateTextureSwapChainDX1_3((ovrSession1_3)session, (IUnknown*)device, &d, chain);
 
 	if (!OVR_SUCCESS(result))
 		return result;
-
-	setChain((ovrSession1_3)session, &chain);
-
-	ovrSwapTextureSet ts;
 	
-	int count = 0;
-	ovr_GetTextureSwapChainLength1_3((ovrSession1_3)session, chain, &count);
+	ovrSwapTextureSet* ts = (ovrSwapTextureSet*)malloc(sizeof(ovrSwapTextureSet));
 
-	ts.TextureCount = count;
-	ts.CurrentIndex = 0;
-	union ovrD3D11Texture* texts = calloc(count, sizeof(ovrTexture));
-	ts.Textures = (ovrTexture*)texts;
+	setChain((ovrSession1_3)session, ts, chain);
+
+	int count = 0;
+	ovr_GetTextureSwapChainLength1_3((ovrSession1_3)session, *chain, &count);
+
+	ts->TextureCount = count;
+	ts->CurrentIndex = count - 1;
+	//union ovrD3D11Texture* texts = calloc(count, sizeof(ovrTexture));
+	ts->Textures = calloc(count, sizeof(union ovrD3D11Texture));
 
 	for (int i = 0; i < count; ++i)
 	{
 		ID3D11Texture2D* texture = 0;
-		ovr_GetTextureSwapChainBufferDX1_3((ovrSession1_3)session, chain, i, IID_ID3D11Texture2D, &texture);
+		ovr_GetTextureSwapChainBufferDX1_3((ovrSession1_3)session, *chain, i, IID_ID3D11Texture2D, &texture);
 
-		texts[i].D3D11.pTexture = texture;
+		union ovrD3D11Texture* ovrtext = (union ovrD3D11Texture*)&ts->Textures[i];
 
-		wrapCreateShaderResourceView(device, (ID3D11Resource*)texture, &texts[i].D3D11.pSRView);
+		ovrtext->D3D11.pTexture = texture;
 
-		texts[i].D3D11.Header.API = ovrRenderAPI_D3D11;
-		texts[i].D3D11.Header.TextureSize.w = d.Width;
-		texts[i].D3D11.Header.TextureSize.h = d.Height;
+		if (makeShaderView) {
+			wrapCreateShaderResourceView(device, (ID3D11Resource*)texture, &ovrtext->D3D11.pSRView);
+		}		
+
+		ovrtext->D3D11.Header.API = ovrRenderAPI_D3D11;
+		ovrtext->D3D11.Header.TextureSize.w = d.Width;
+		ovrtext->D3D11.Header.TextureSize.h = d.Height;
 	}
 	
-	*outTextureSet = &ts;	
+	*outTextureSet = ts;	
 
 	return result;
 }
@@ -140,27 +148,29 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_CreateMirrorTextureD3D11(ovrSession session,
 		d.MiscFlags |= ovrTextureMisc_DX_Typeless;
 	}
 
-	ovrMirrorTexture1_3 mirror;	
+	ovrMirrorTexture1_3* mirror = (ovrMirrorTexture1_3*)malloc(sizeof(ovrMirrorTexture1_3));
 
-	ovrResult result = ovr_CreateMirrorTextureDX1_3((ovrSession1_3)session, (IUnknown*)device, &d, &mirror);
+	ovrResult result = ovr_CreateMirrorTextureDX1_3((ovrSession1_3)session, (IUnknown*)device, &d, mirror);
 
 	if (!OVR_SUCCESS(result))
 		return result;
 
-	union ovrD3D11Texture ovrtext;
+	union ovrD3D11Texture* ovrtext = malloc(sizeof(union ovrD3D11Texture));
 
 	ID3D11Texture2D* texture = 0;	
-	ovr_GetMirrorTextureBufferDX1_3((ovrSession1_3)session, mirror, IID_ID3D11Texture2D, &texture);
+	ovr_GetMirrorTextureBufferDX1_3((ovrSession1_3)session, *mirror, IID_ID3D11Texture2D, &texture);
 
-	ovrtext.D3D11.pTexture = texture;
+	ovrtext->D3D11.pTexture = texture;
 
-	wrapCreateShaderResourceView(device, (ID3D11Resource*)texture, &ovrtext.D3D11.pSRView);
+	wrapCreateShaderResourceView(device, (ID3D11Resource*)texture, &ovrtext->D3D11.pSRView);
 
-	ovrtext.D3D11.Header.API = ovrRenderAPI_D3D11;
-	ovrtext.D3D11.Header.TextureSize.w = d.Width;
-	ovrtext.D3D11.Header.TextureSize.h = d.Height;
+	ovrtext->D3D11.Header.API = ovrRenderAPI_D3D11;
+	ovrtext->D3D11.Header.TextureSize.w = d.Width;
+	ovrtext->D3D11.Header.TextureSize.h = d.Height;
 
-	*outMirrorTexture = (ovrTexture*)&ovrtext;
+	*outMirrorTexture = (ovrTexture*)ovrtext;
+
+	setMirror(mirror);
 
 	return result;
 
