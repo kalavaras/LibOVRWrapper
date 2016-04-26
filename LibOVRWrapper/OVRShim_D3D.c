@@ -55,6 +55,9 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_CreateSwapTextureSetD3D11(ovrSession session,
 	unsigned int miscFlags,
 	ovrSwapTextureSet** outTextureSet) {
 	
+	D3D11_TEXTURE2D_DESC descClone;
+	memcpy(&descClone, desc, sizeof(D3D11_TEXTURE2D_DESC));
+
 	ovrTextureSwapChainDesc1_3 d;
 	d.Type = ovrTexture_2D;
 	d.ArraySize = desc->ArraySize;
@@ -69,11 +72,23 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_CreateSwapTextureSetD3D11(ovrSession session,
 	d.MiscFlags = 0;
 	if (miscFlags & ovrSwapTextureSetD3D11_Typeless) {
 		d.MiscFlags |= ovrTextureMisc_DX_Typeless;
+
+		switch (descClone.Format) {
+		case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+			descClone.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+			break;
+		case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+			descClone.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+			break;
+		case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
+			descClone.Format = DXGI_FORMAT_B8G8R8X8_UNORM;
+			break;
+		}
 	}
 	
 	BOOL makeShaderView = 0;
 	d.BindFlags = 0;
-	if (desc->BindFlags & D3D11_BIND_RENDER_TARGET) {
+	/*if (desc->BindFlags & D3D11_BIND_RENDER_TARGET) {
 		d.BindFlags |= ovrTextureBind_DX_RenderTarget;
 	}
 	if (desc->BindFlags & D3D11_BIND_UNORDERED_ACCESS) {
@@ -81,44 +96,50 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_CreateSwapTextureSetD3D11(ovrSession session,
 	}
 	if (desc->BindFlags & D3D11_BIND_DEPTH_STENCIL) {
 		d.BindFlags |= ovrTextureBind_DX_DepthStencil;
-	}
+	}*/
 	if (desc->BindFlags & D3D11_BIND_SHADER_RESOURCE) {
 		makeShaderView = 1;
 	}	
 	
 	d.StaticImage = ovrFalse;
 
-	ovrTextureSwapChain1_3* chain = (ovrTextureSwapChain1_3*)malloc(sizeof(ovrTextureSwapChain1_3));
-
-	ovrResult result = ovr_CreateTextureSwapChainDX1_3((ovrSession1_3)session, (IUnknown*)device, &d, chain);
+	ovrTextureSwapChainWrapper* chainwrapper = (ovrTextureSwapChainWrapper*)malloc(sizeof(ovrTextureSwapChainWrapper));
+	GetContext(device, &chainwrapper->pContext);
+	
+	ovrResult result = ovr_CreateTextureSwapChainDX1_3((ovrSession1_3)session, (IUnknown*)device, &d, &chainwrapper->swapChain);
 
 	if (!OVR_SUCCESS(result))
 		return result;
 	
 	ovrSwapTextureSet* ts = (ovrSwapTextureSet*)malloc(sizeof(ovrSwapTextureSet));
 
-	setChain((ovrSession1_3)session, ts, chain);
+	setChain((ovrSession1_3)session, ts, chainwrapper);
 
-	int count = 0;
-	ovr_GetTextureSwapChainLength1_3((ovrSession1_3)session, *chain, &count);
+	ovr_GetTextureSwapChainLength1_3((ovrSession1_3)session, chainwrapper->swapChain, &chainwrapper->textureCount);
 
-	ts->TextureCount = count;
-	ts->CurrentIndex = count - 1;
-	//union ovrD3D11Texture* texts = calloc(count, sizeof(ovrTexture));
-	ts->Textures = calloc(count, sizeof(union ovrD3D11Texture));
+	chainwrapper->textures = (ID3D11Texture2D**)calloc(chainwrapper->textureCount, sizeof(ID3D11Texture2D*));
 
-	for (int i = 0; i < count; ++i)
-	{
-		ID3D11Texture2D* texture = 0;
-		ovr_GetTextureSwapChainBufferDX1_3((ovrSession1_3)session, *chain, i, IID_ID3D11Texture2D, &texture);
+	ts->TextureCount = 2;
+	ts->CurrentIndex = 0;	
+	ts->Textures = calloc(ts->TextureCount, sizeof(union ovrD3D11Texture));
 
+	for (int i = 0; i < chainwrapper->textureCount; ++i)
+	{		
+		ovr_GetTextureSwapChainBufferDX1_3((ovrSession1_3)session, chainwrapper->swapChain, i, IID_ID3D11Texture2D, &chainwrapper->textures[i]);
+	}
+
+	for (int i = 0;i < 2;i++) {
 		union ovrD3D11Texture* ovrtext = (union ovrD3D11Texture*)&ts->Textures[i];
 
-		ovrtext->D3D11.pTexture = texture;
+		ovrResult tr = makeD3D11Texture((IUnknown*)device, &descClone, &ovrtext->D3D11.pTexture);
+
+		if (tr < 0) {
+			return ovrError_RuntimeException;
+		}
 
 		if (makeShaderView) {
-			wrapCreateShaderResourceView(device, (ID3D11Resource*)texture, &ovrtext->D3D11.pSRView);
-		}		
+			wrapCreateShaderResourceView(device, (ID3D11Resource*)ovrtext->D3D11.pTexture, &ovrtext->D3D11.pSRView);
+		}
 
 		ovrtext->D3D11.Header.API = ovrRenderAPI_D3D11;
 		ovrtext->D3D11.Header.TextureSize.w = d.Width;
