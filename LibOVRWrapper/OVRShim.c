@@ -364,7 +364,33 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_SubmitFrame(ovrSession session, long long fra
 	}
 	
 
-	return ovr_SubmitFrame1_3((ovrSession1_3)session, frameIndex, (const ovrViewScaleDesc1_3*)viewScaleDesc, newlayers, layerCount);
+	ovrResult r = ovr_SubmitFrame1_3((ovrSession1_3)session, frameIndex, (const ovrViewScaleDesc1_3*)viewScaleDesc, newlayers, layerCount);
+
+	int idx;
+
+	for (unsigned int i = 0;i < layerCount;i++) {
+		const ovrLayerHeader* layer = layerPtrList[i];
+
+		if (layer->Type == ovrLayerType_EyeFov) {
+			const ovrLayerEyeFov* oldelayer = (const ovrLayerEyeFov*)layer;
+
+			ovr_GetTextureSwapChainCurrentIndex((ovrSession1_3)session, oldelayer->ColorTexture[0], &idx);
+			ovr_GetTextureSwapChainCurrentIndex((ovrSession1_3)session, oldelayer->ColorTexture[1], &idx);
+		}
+		else if (layer->Type == ovrLayerType_EyeMatrix) {
+			const ovrLayerEyeMatrix* oldelayer = (const ovrLayerEyeMatrix*)layer;
+			
+			ovr_GetTextureSwapChainCurrentIndex((ovrSession1_3)session, oldelayer->ColorTexture[0], &idx);
+			ovr_GetTextureSwapChainCurrentIndex((ovrSession1_3)session, oldelayer->ColorTexture[1], &idx);
+		}
+		else if (layer->Type == ovrLayerType_Quad) {
+			const ovrLayerQuad* oldelayer = (const ovrLayerQuad*)layer;
+			
+			ovr_GetTextureSwapChainCurrentIndex((ovrSession1_3)session, oldelayer->ColorTexture, &idx);			
+		}		
+	}	
+
+	return r;
 }
 
 OVR_PUBLIC_FUNCTION(double) ovr_GetPredictedDisplayTime(ovrSession session, long long frameIndex) {
