@@ -212,7 +212,7 @@ static const uint8_t OculusSDKUniqueIdentifierXORResult = 0xcb;
 
 //ADDED
 static LPCSTR fixname(LPCSTR name) {
-	size_t s = strlen(name) + (1U - 3U) * sizeof(char); //remove 1_3
+	size_t s = strlen(name) + (1 - 3) * sizeof(char); //remove 1_3
 	char *r = (char*)malloc(s * sizeof(char));
 	strncpy(r, name, strlen(name) - 3);
 	r[strlen(name) - 3] = '\0';
