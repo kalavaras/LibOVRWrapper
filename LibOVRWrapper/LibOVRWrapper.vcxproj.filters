@@ -38,16 +38,16 @@
     <ClCompile Include="dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OVRShim.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="OVRShim_D3D.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="shimhelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OVRShim_GL.c">
+    <ClCompile Include="OVRShim.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OVRShim_D3D.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OVRShim_GL.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

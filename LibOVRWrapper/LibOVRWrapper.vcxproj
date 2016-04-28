@@ -186,9 +186,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="OVRShim.c" />
-    <ClCompile Include="OVRShim_D3D.c" />
-    <ClCompile Include="OVRShim_GL.c" />
+    <ClCompile Include="OVRShim.cpp" />
+    <ClCompile Include="OVRShim_D3D.cpp" />
+    <ClCompile Include="OVRShim_GL.cpp" />
     <ClCompile Include="shimhelper.cpp" />
     <ClCompile Include="stdafx.cpp" />
   </ItemGroup>

@@ -121,11 +121,11 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_CreateSwapTextureSetD3D11(ovrSession session,
 
 	ts->TextureCount = 2;
 	ts->CurrentIndex = 0;	
-	ts->Textures = calloc(ts->TextureCount, sizeof(union ovrD3D11Texture));
+	ts->Textures = (ovrTexture*)calloc(ts->TextureCount, sizeof(union ovrD3D11Texture));
 
 	for (int i = 0; i < chainwrapper->textureCount; ++i)
 	{		
-		ovr_GetTextureSwapChainBufferDX1_3((ovrSession1_3)session, chainwrapper->swapChain, i, IID_ID3D11Texture2D, &chainwrapper->textures[i]);
+		ovr_GetTextureSwapChainBufferDX1_3((ovrSession1_3)session, chainwrapper->swapChain, i, IID_ID3D11Texture2D, (void**)&chainwrapper->textures[i]);
 	}
 
 	for (int i = 0;i < 2;i++) {
@@ -176,10 +176,10 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_CreateMirrorTextureD3D11(ovrSession session,
 	if (!OVR_SUCCESS(result))
 		return result;
 
-	union ovrD3D11Texture* ovrtext = malloc(sizeof(union ovrD3D11Texture));
+	union ovrD3D11Texture* ovrtext = (ovrD3D11Texture*)malloc(sizeof(union ovrD3D11Texture));
 
 	ID3D11Texture2D* texture = 0;	
-	ovr_GetMirrorTextureBufferDX1_3((ovrSession1_3)session, *mirror, IID_ID3D11Texture2D, &texture);
+	ovr_GetMirrorTextureBufferDX1_3((ovrSession1_3)session, *mirror, IID_ID3D11Texture2D, (void**)&texture);
 
 	ovrtext->D3D11.pTexture = texture;
 

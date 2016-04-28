@@ -10,6 +10,7 @@
 #endif
 
 #include "../LibOVR0.8/Include/OVR_CAPI_0_8_0.h"
+#include "../LibOVR0.8/Include/OVR_CAPI_D3D.h"
 
 #include "shimhelper.h"
 #include "OVRShim.h"
@@ -68,10 +69,10 @@ OVR_PUBLIC_FUNCTION(ovrHmdDesc) ovr_GetHmdDesc(ovrSession session) {
 	d.VendorId = desc.VendorId;
 
 	if (desc.Type > 12) {
-		d.Type = 12;
+		d.Type = (ovrHmdType)12;
 	}
 	else {
-		d.Type = desc.Type;
+		d.Type = (ovrHmdType)desc.Type;
 	}
 
 	return d;
@@ -210,7 +211,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetInputState(ovrSession session, unsigned in
 
 OVR_PUBLIC_FUNCTION(ovrResult) ovr_SetControllerVibration(ovrSession session, unsigned int controllerTypeMask,
 	float frequency, float amplitude) {
-	return ovr_SetControllerVibration1_3((ovrSession1_3)session, controllerTypeMask, frequency, amplitude);
+	return ovr_SetControllerVibration1_3((ovrSession1_3)session, (ovrControllerType1_3)controllerTypeMask, frequency, amplitude);
 }
 
 OVR_PUBLIC_FUNCTION(void) ovr_DestroySwapTextureSet(ovrSession session, ovrSwapTextureSet* textureSet) {	
@@ -225,6 +226,12 @@ OVR_PUBLIC_FUNCTION(void) ovr_DestroyMirrorTexture(ovrSession session, ovrTextur
 	ovr_DestroyMirrorTexture1_3((ovrSession1_3)session, *mirror);
 
 	setMirror(NULL);
+
+	if (mirrorTexture->Header.API == ovrRenderAPI_D3D11) {
+		union ovrD3D11Texture* ovrtext = (union ovrD3D11Texture*)mirrorTexture;
+
+		ovrtext->D3D11.pTexture->Release();
+	}
 }
 
 OVR_PUBLIC_FUNCTION(ovrSizei) ovr_GetFovTextureSize(ovrSession session, ovrEyeType eye, ovrFovPort fov,
@@ -235,7 +242,7 @@ OVR_PUBLIC_FUNCTION(ovrSizei) ovr_GetFovTextureSize(ovrSession session, ovrEyeTy
 	fport.RightTan = fov.RightTan;
 	fport.UpTan = fov.UpTan;
 
-	return ovr_GetFovTextureSize1_3((ovrSession1_3)session, eye, fport, pixelsPerDisplayPixel);
+	return ovr_GetFovTextureSize1_3((ovrSession1_3)session, (ovrEyeType1_3)eye, fport, pixelsPerDisplayPixel);
 }
 
 OVR_PUBLIC_FUNCTION(ovrEyeRenderDesc) ovr_GetRenderDesc(ovrSession session,
@@ -247,12 +254,12 @@ OVR_PUBLIC_FUNCTION(ovrEyeRenderDesc) ovr_GetRenderDesc(ovrSession session,
 	fport.RightTan = fov.RightTan;
 	fport.UpTan = fov.UpTan;
 
-	ovrEyeRenderDesc1_3 desc = ovr_GetRenderDesc1_3((ovrSession1_3)session, eyeType, fport);
+	ovrEyeRenderDesc1_3 desc = ovr_GetRenderDesc1_3((ovrSession1_3)session, (ovrEyeType1_3)eyeType, fport);
 
 	ovrEyeRenderDesc r;
 
 	r.DistortedViewport = desc.DistortedViewport;
-	r.Eye = desc.Eye;
+	r.Eye = (ovrEyeType)desc.Eye;
 	r.Fov.DownTan = desc.Fov.DownTan;
 	r.Fov.LeftTan = desc.Fov.LeftTan;
 	r.Fov.RightTan = desc.Fov.RightTan;
@@ -322,7 +329,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_SubmitFrame(ovrSession session, long long fra
 			elayer->Fov[1].RightTan = oldelayer->Fov[1].RightTan;
 
 			elayer->Header.Flags = oldelayer->Header.Flags;
-			elayer->Header.Type = oldelayer->Header.Type;
+			elayer->Header.Type = (ovrLayerType1_3)oldelayer->Header.Type;
 
 			copyPoseR(&elayer->RenderPose[0], &oldelayer->RenderPose[0]);
 			copyPoseR(&elayer->RenderPose[1], &oldelayer->RenderPose[1]);
@@ -344,7 +351,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_SubmitFrame(ovrSession session, long long fra
 			elayer->Matrix[1] = oldelayer->Matrix[1];			
 
 			elayer->Header.Flags = oldelayer->Header.Flags;
-			elayer->Header.Type = oldelayer->Header.Type;
+			elayer->Header.Type = (ovrLayerType1_3)oldelayer->Header.Type;
 
 			copyPoseR(&elayer->RenderPose[0], &oldelayer->RenderPose[0]);
 			copyPoseR(&elayer->RenderPose[1], &oldelayer->RenderPose[1]);
@@ -371,7 +378,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_SubmitFrame(ovrSession session, long long fra
 			ovrLayerHeader1_3 *elayer = (ovrLayerHeader1_3*)malloc(sizeof(ovrLayerHeader1_3));
 
 			elayer->Flags = layer->Flags;
-			elayer->Type = layer->Type;
+			elayer->Type = (ovrLayerType1_3)layer->Type;
 
 			newlayers[np] = (ovrLayerHeader1_3*)elayer;
 		}
@@ -382,7 +389,15 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_SubmitFrame(ovrSession session, long long fra
 		np++;
 	}
 	
-	return ovr_SubmitFrame1_3((ovrSession1_3)session, frameIndex, (const ovrViewScaleDesc1_3*)viewScaleDesc, newlayers, trueLayerCount);
+	ovrResult r = ovr_SubmitFrame1_3((ovrSession1_3)session, frameIndex, (const ovrViewScaleDesc1_3*)viewScaleDesc, newlayers, trueLayerCount);
+
+	for (unsigned int i = 0;i < trueLayerCount;i++) {
+		free(newlayers[i]);
+	}
+
+	free(newlayers);
+
+	return r;
 }
 
 OVR_PUBLIC_FUNCTION(double) ovr_GetPredictedDisplayTime(ovrSession session, long long frameIndex) {
