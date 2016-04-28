@@ -282,14 +282,28 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_SubmitFrame(ovrSession session, long long fra
 	ovrLayerHeader const * const * layerPtrList, unsigned int layerCount) {
 
 	//ovrLayerType 2, 6 do not exists anymore. max layer count is 16 instead of 32
-	if (layerCount > 16) {
-		return ovrError_InvalidParameter;
+
+	unsigned int trueLayerCount = 0;
+	for (unsigned int i = 0;i < layerCount;i++) {
+		if (layerPtrList[i] != NULL) {
+			trueLayerCount++;
+		}
 	}
 
-	ovrLayerHeader1_3** newlayers = (ovrLayerHeader1_3**)malloc(sizeof(ovrLayerHeader1_3*) * layerCount);
+	if (trueLayerCount > 16) {
+		return ovrError_RuntimeException;
+	}	
+
+	ovrLayerHeader1_3** newlayers = (ovrLayerHeader1_3**)malloc(sizeof(ovrLayerHeader1_3*) * trueLayerCount);
 	
+	unsigned int np = 0;
+
 	for (unsigned int i = 0;i < layerCount;i++) {
 		const ovrLayerHeader* layer = layerPtrList[i];
+
+		if (layer == NULL) {
+			continue;
+		}
 
 		if (layer->Type == ovrLayerType_EyeFov) {
 			const ovrLayerEyeFov* oldelayer = (const ovrLayerEyeFov*)layer;
@@ -317,7 +331,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_SubmitFrame(ovrSession session, long long fra
 			elayer->Viewport[0] = oldelayer->Viewport[0];
 			elayer->Viewport[1] = oldelayer->Viewport[1];
 
-			newlayers[i] = (ovrLayerHeader1_3*)elayer;
+			newlayers[np] = (ovrLayerHeader1_3*)elayer;
 		}
 		else if (layer->Type == ovrLayerType_EyeMatrix) {
 			const ovrLayerEyeMatrix* oldelayer = (const ovrLayerEyeMatrix*)layer;
@@ -339,7 +353,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_SubmitFrame(ovrSession session, long long fra
 			elayer->Viewport[0] = oldelayer->Viewport[0];
 			elayer->Viewport[1] = oldelayer->Viewport[1];
 
-			newlayers[i] = (ovrLayerHeader1_3*)elayer;
+			newlayers[np] = (ovrLayerHeader1_3*)elayer;
 		}
 		else if (layer->Type == ovrLayerType_Quad) {
 			const ovrLayerQuad* oldelayer = (const ovrLayerQuad*)layer;
@@ -351,7 +365,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_SubmitFrame(ovrSession session, long long fra
 
 			elayer->QuadSize = oldelayer->QuadSize;
 
-			newlayers[i] = (ovrLayerHeader1_3*)elayer;
+			newlayers[np] = (ovrLayerHeader1_3*)elayer;
 		}
 		else if (layer->Type == ovrLayerType_Disabled) {			
 			ovrLayerHeader1_3 *elayer = (ovrLayerHeader1_3*)malloc(sizeof(ovrLayerHeader1_3));
@@ -359,15 +373,16 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_SubmitFrame(ovrSession session, long long fra
 			elayer->Flags = layer->Flags;
 			elayer->Type = layer->Type;
 
-			newlayers[i] = (ovrLayerHeader1_3*)elayer;
+			newlayers[np] = (ovrLayerHeader1_3*)elayer;
 		}
 		else {
 			return ovrError_InvalidParameter;
 		}
 
+		np++;
 	}
 	
-	return ovr_SubmitFrame1_3((ovrSession1_3)session, frameIndex, (const ovrViewScaleDesc1_3*)viewScaleDesc, newlayers, layerCount);
+	return ovr_SubmitFrame1_3((ovrSession1_3)session, frameIndex, (const ovrViewScaleDesc1_3*)viewScaleDesc, newlayers, trueLayerCount);
 }
 
 OVR_PUBLIC_FUNCTION(double) ovr_GetPredictedDisplayTime(ovrSession session, long long frameIndex) {
