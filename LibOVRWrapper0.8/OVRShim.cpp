@@ -298,7 +298,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_SubmitFrame(ovrSession session, long long fra
 	}
 
 	if (trueLayerCount > 16) {
-		return ovrError_RuntimeException;
+		trueLayerCount = 16; //ignore layer counts > 16
 	}	
 
 	ovrLayerHeader1_3** newlayers = (ovrLayerHeader1_3**)malloc(sizeof(ovrLayerHeader1_3*) * trueLayerCount);
@@ -383,10 +383,14 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_SubmitFrame(ovrSession session, long long fra
 			newlayers[np] = (ovrLayerHeader1_3*)elayer;
 		}
 		else {
-			return ovrError_InvalidParameter;
+			continue; //ignore unsupported layers
 		}
 
 		np++;
+
+		if (np > 16) {
+			break;
+		}
 	}
 	
 	ovrResult r = ovr_SubmitFrame1_3((ovrSession1_3)session, frameIndex, (const ovrViewScaleDesc1_3*)viewScaleDesc, newlayers, trueLayerCount);
@@ -479,6 +483,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_Lookup(const char* name, void** data) {
 	return ovr_Lookup1_3(name, data);
 }
 
+//these two functions below are just for debugging purposes
 OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetTextureSwapChainCurrentIndex(ovrSession session, ovrSwapTextureSet* textureSet, int* currentIndex) {
 	ovrTextureSwapChain1_3 chain = getChain((ovrSession1_3)session, textureSet)->swapChain;
 
