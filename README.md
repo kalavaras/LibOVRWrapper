@@ -6,7 +6,7 @@ This is a library that wraps calls from applications that user older Oculus VR S
 
 Help is welcome. My c++ skills are rusty and I don't have time to support this very well.
 
-Tested to be working in:
+Tested to be working:
 
 * Most of the SDK samples
 * Surge 1.2.2
@@ -20,9 +20,11 @@ Extract to a folder. Copy the dll files to where the wanted application sees the
 
 To install globally:
 
-Copy LibOVRRT32*.dll to c:\windows\syswow64
+Copy LibOVRRT32XXXX.dll to c:\windows\syswow64
+
 AND
-Copy LibOVRRT64*.dll to c:\windows\system32
+
+Copy LibOVRRT64XXXX.dll to c:\windows\system32
 
 Or run the install .bat file as administrator to do it for you.
 
@@ -47,7 +49,7 @@ Limitations
 Building
 --------
 
-Open LibOVRWrapper.sln in Visual Studio 2015
+Open and build LibOVRWrapper.sln in Visual Studio 2015
 
 License
 -------

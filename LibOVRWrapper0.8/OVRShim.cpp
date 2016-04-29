@@ -316,8 +316,14 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_SubmitFrame(ovrSession session, long long fra
 			const ovrLayerEyeFov* oldelayer = (const ovrLayerEyeFov*)layer;
 			ovrLayerEyeFov1_3 *elayer = (ovrLayerEyeFov1_3*)malloc(sizeof(ovrLayerEyeFov1_3));
 
-			elayer->ColorTexture[0] = renderChain((ovrSession1_3)session, oldelayer->ColorTexture[0]);
-			elayer->ColorTexture[1] = renderChain((ovrSession1_3)session, oldelayer->ColorTexture[1]);
+			//if both eyes use same swaptextureset
+			if (oldelayer->ColorTexture[0] == oldelayer->ColorTexture[1]) {
+				elayer->ColorTexture[0] = renderChain((ovrSession1_3)session, oldelayer->ColorTexture[0]);
+				elayer->ColorTexture[1] = elayer->ColorTexture[0];
+			} else {
+				elayer->ColorTexture[0] = renderChain((ovrSession1_3)session, oldelayer->ColorTexture[0]);
+				elayer->ColorTexture[1] = renderChain((ovrSession1_3)session, oldelayer->ColorTexture[1]);
+			}		
 			
 			elayer->Fov[0].DownTan = oldelayer->Fov[0].DownTan;
 			elayer->Fov[0].LeftTan = oldelayer->Fov[0].LeftTan;
@@ -344,8 +350,15 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_SubmitFrame(ovrSession session, long long fra
 			const ovrLayerEyeMatrix* oldelayer = (const ovrLayerEyeMatrix*)layer;
 			ovrLayerEyeMatrix1_3 *elayer = (ovrLayerEyeMatrix1_3*)malloc(sizeof(ovrLayerEyeMatrix1_3));
 
-			elayer->ColorTexture[0] = renderChain((ovrSession1_3)session, oldelayer->ColorTexture[0]);
-			elayer->ColorTexture[1] = renderChain((ovrSession1_3)session, oldelayer->ColorTexture[1]);
+			//if both eyes use same swaptextureset
+			if (oldelayer->ColorTexture[0] == oldelayer->ColorTexture[1]) {
+				elayer->ColorTexture[0] = renderChain((ovrSession1_3)session, oldelayer->ColorTexture[0]);
+				elayer->ColorTexture[1] = elayer->ColorTexture[0];
+			}
+			else {
+				elayer->ColorTexture[0] = renderChain((ovrSession1_3)session, oldelayer->ColorTexture[0]);
+				elayer->ColorTexture[1] = renderChain((ovrSession1_3)session, oldelayer->ColorTexture[1]);
+			}
 
 			elayer->Matrix[0] = oldelayer->Matrix[0];
 			elayer->Matrix[1] = oldelayer->Matrix[1];			
