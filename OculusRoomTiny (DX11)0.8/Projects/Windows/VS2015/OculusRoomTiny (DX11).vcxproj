@@ -28,7 +28,7 @@
     <ProjectGuid>{4D6101BA-A0BE-48E6-992E-19BC74CA69F3}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>OculusRoomTiny</RootNamespace>
-    <ProjectName>OculusRoomTiny (DX11)</ProjectName>
+    <ProjectName>OculusRoomTiny (DX11) 0.8</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LibOVRWrapper", "LibOVRWrapper\LibOVRWrapper.vcxproj", "{25A5FFF4-8C0A-4B05-9A9B-5049130E0ECC}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LibOVRWrapper", "LibOVRWrapper0.8\LibOVRWrapper.vcxproj", "{25A5FFF4-8C0A-4B05-9A9B-5049130E0ECC}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LibOVR", "LibOVR\Projects\Windows\VS2015\LibOVR.vcxproj", "{EA50E705-5113-49E5-B105-2512EDC8DDC6}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LibOVR0.8", "LibOVR0.8\Projects\Windows\VS2015\LibOVR0.8.vcxproj", "{8A7CD1C2-48C4-4DD1-AC5E-A4675C344771}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OculusRoomTiny (DX11)", "OculusRoomTiny (DX11)\Projects\Windows\VS2015\OculusRoomTiny (DX11).vcxproj", "{4D6101BA-A0BE-48E6-992E-19BC74CA69F3}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OculusRoomTiny (DX11)", "OculusRoomTiny (DX11)0.8\Projects\Windows\VS2015\OculusRoomTiny (DX11).vcxproj", "{4D6101BA-A0BE-48E6-992E-19BC74CA69F3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
