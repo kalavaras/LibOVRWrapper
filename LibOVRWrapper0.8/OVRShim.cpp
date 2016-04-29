@@ -388,7 +388,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_SubmitFrame(ovrSession session, long long fra
 
 		np++;
 
-		if (np > 16) {
+		if (np > 15) {
 			break;
 		}
 	}
