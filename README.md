@@ -2,7 +2,7 @@
 LibOVRWrapper
 =============
 
-This is a library that wraps calls from applications that user older Oculus VR SDK versions to a supported version (1.3). Currently only 0.8->1.3 wrapping is supported but more versions will be added.
+This is a library that wraps calls from applications that user older Oculus VR SDK versions to a supported version (1.3). Currently 0.7 and 0.8 wrapping is supported but more versions will be added.
 
 Help is welcome. My c++ skills are rusty and I don't have time to support this very well.
 
@@ -31,7 +31,6 @@ Or run the install .bat file as administrator to do it for you.
 To-Do List, in decreasing priority
 ----------------------------------
 
-* 0.7 support
 * 0.6 support
 * 0.5 support
 * OpenGL support

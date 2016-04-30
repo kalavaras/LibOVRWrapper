@@ -442,8 +442,10 @@ OVR_PUBLIC_FUNCTION(float) ovr_GetFloat(ovrHmd session, const char* propertyName
 
 OVR_PUBLIC_FUNCTION(ovrBool) ovr_SetFloat(ovrHmd session, const char* propertyName, float value) {
 	if (strcmp(propertyName, OVR_KEY_IPD) == 0) {
-		return ovrFalse;
-	}
+		return ovrTrue;
+	} else if (strcmp(propertyName, "QueueAheadSeconds") == 0) {
+		return ovrTrue;
+	}	
 
 	return ovr_SetFloat1_3((ovrSession1_3)session, propertyName, value);
 }
@@ -466,10 +468,6 @@ OVR_PUBLIC_FUNCTION(const char*) ovr_GetString(ovrHmd session, const char* prope
 OVR_PUBLIC_FUNCTION(ovrBool) ovr_SetString(ovrHmd session, const char* propertyName,
 	const char* value) {
 	return ovr_SetString1_3((ovrSession1_3)session, propertyName, value);
-}
-
-OVR_PUBLIC_FUNCTION(ovrResult) ovr_SetQueueAheadFraction(ovrHmd session, float queueAheadFraction) {
-	return ovr_SetQueueAheadFraction1_3((ovrSession1_3)session, queueAheadFraction);
 }
 
 OVR_PUBLIC_FUNCTION(ovrResult) ovr_Lookup(const char* name, void** data) {
