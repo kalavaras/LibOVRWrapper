@@ -14,13 +14,13 @@
 
 #include "shimhelper.h"
 
-OVR_PUBLIC_FUNCTION(ovrResult) ovr_CreateSwapTextureSetGL(ovrHmd session, GLuint format,
+OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_CreateSwapTextureSetGL(ovrHmd hmd, GLuint format,
 	int width, int height,
 	ovrSwapTextureSet** outTextureSet) {
 	return -1;
 }
 
-OVR_PUBLIC_FUNCTION(ovrResult) ovr_CreateMirrorTextureGL(ovrHmd session, GLuint format,
+OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_CreateMirrorTextureGL(ovrHmd hmd, GLuint format,
 	int width, int height,
 	ovrTexture** outMirrorTexture) {
 	return -1;

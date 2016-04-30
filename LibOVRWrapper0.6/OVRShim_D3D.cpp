@@ -23,15 +23,15 @@ ovrTextureFormat1_3 getOVRFormat(DXGI_FORMAT format) {
 		case DXGI_FORMAT_B4G4R4A4_UNORM:
 			return OVR_FORMAT_B4G4R4A4_UNORM;
 		case DXGI_FORMAT_R8G8B8A8_UNORM:
-			return OVR_FORMAT_R8G8B8A8_UNORM;
+			return OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
 		case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
 			return OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
 		case DXGI_FORMAT_B8G8R8A8_UNORM:
-			return OVR_FORMAT_B8G8R8A8_UNORM;
+			return OVR_FORMAT_B8G8R8A8_UNORM_SRGB;
 		case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
 			return OVR_FORMAT_B8G8R8A8_UNORM_SRGB;
 		case DXGI_FORMAT_B8G8R8X8_UNORM:
-			return OVR_FORMAT_B8G8R8X8_UNORM;
+			return OVR_FORMAT_B8G8R8X8_UNORM_SRGB;
 		case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
 			return OVR_FORMAT_B8G8R8X8_UNORM_SRGB;
 		case DXGI_FORMAT_R16G16B16A16_FLOAT:
@@ -49,7 +49,7 @@ ovrTextureFormat1_3 getOVRFormat(DXGI_FORMAT format) {
 	return OVR_FORMAT_UNKNOWN;		
 }
 
-OVR_PUBLIC_FUNCTION(ovrResult) ovr_CreateSwapTextureSetD3D11(ovrHmd hmd,
+OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_CreateSwapTextureSetD3D11(ovrHmd hmd,
 	ID3D11Device* device,
 	const D3D11_TEXTURE2D_DESC* desc,
 	ovrSwapTextureSet** outTextureSet) {
@@ -69,16 +69,17 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_CreateSwapTextureSetD3D11(ovrHmd hmd,
 	d.SampleCount = desc->SampleDesc.Count;
 	
 	d.MiscFlags = 0;
-	switch (descClone.Format) {
-	case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+	
+	switch (d.Format) {
+	case OVR_FORMAT_R8G8B8A8_UNORM_SRGB:
 		d.MiscFlags |= ovrTextureMisc_DX_Typeless;
 		descClone.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 		break;
-	case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+	case OVR_FORMAT_B8G8R8A8_UNORM_SRGB:
 		d.MiscFlags |= ovrTextureMisc_DX_Typeless;
 		descClone.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
 		break;
-	case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
+	case OVR_FORMAT_B8G8R8X8_UNORM_SRGB:
 		d.MiscFlags |= ovrTextureMisc_DX_Typeless;
 		descClone.Format = DXGI_FORMAT_B8G8R8X8_UNORM;
 		break;
@@ -149,7 +150,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_CreateSwapTextureSetD3D11(ovrHmd hmd,
 	return result;
 }
 
-OVR_PUBLIC_FUNCTION(ovrResult) ovr_CreateMirrorTextureD3D11(ovrHmd hmd,
+OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_CreateMirrorTextureD3D11(ovrHmd hmd,
 	ID3D11Device* device,
 	const D3D11_TEXTURE2D_DESC* desc,
 	ovrTexture** outMirrorTexture) {

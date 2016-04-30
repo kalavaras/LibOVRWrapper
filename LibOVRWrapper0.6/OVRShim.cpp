@@ -56,13 +56,13 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_Detect() {
 	}
 }
 
-ovrGraphicsLuid1_3* globalGraphicsLuid = NULL;
+ovrGraphicsLuid1_3 globalGraphicsLuid;
 
 OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_Create(int index, ovrHmd* pHmd) {
-	ovrSession1_3* pSession = NULL;
-	ovrGraphicsLuid1_3* pLuid = NULL;
+	ovrSession1_3 pSession;
+	ovrGraphicsLuid1_3 pLuid;
 
-	ovrResult r = ovr_Create1_3((ovrSession1_3*)pSession, (ovrGraphicsLuid1_3*)pLuid);
+	ovrResult r = ovr_Create1_3(&pSession, &pLuid);
 
 	if (!OVR_SUCCESS(r)) {
 		return r;
@@ -70,7 +70,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_Create(int index, ovrHmd* pHmd) {
 
 	globalGraphicsLuid = pLuid;
 
-	ovrHmdDesc1_3 desc = ovr_GetHmdDesc1_3(*pSession);
+	ovrHmdDesc1_3 desc = ovr_GetHmdDesc1_3(pSession);
 
 	ovrHmdDesc* d = (ovrHmdDesc*)malloc(sizeof(ovrHmdDesc));
 
@@ -78,7 +78,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_Create(int index, ovrHmd* pHmd) {
 	d->HmdCaps = desc.AvailableHmdCaps;
 	d->TrackingCaps = desc.AvailableTrackingCaps;
 
-	ovrTrackerDesc1_3 tracker = ovr_GetTrackerDesc1_3(*pSession, 0);
+	ovrTrackerDesc1_3 tracker = ovr_GetTrackerDesc1_3(pSession, 0);
 
 	d->CameraFrustumFarZInMeters = tracker.FrustumFarZInMeters;
 	d->CameraFrustumHFovInRadians = tracker.FrustumHFovInRadians;
@@ -93,11 +93,11 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_Create(int index, ovrHmd* pHmd) {
 	d->Manufacturer = (char*)malloc(sizeof(char) * 64);
 	d->ProductName = (char*)malloc(sizeof(char) * 64);
 
-	strncpy_s((char*)d->Manufacturer, sizeof(d->Manufacturer), desc.Manufacturer, sizeof(desc.Manufacturer) / sizeof(desc.Manufacturer[0]));
+	strncpy_s((char*)d->Manufacturer, sizeof(char) * 64, desc.Manufacturer, sizeof(desc.Manufacturer) / sizeof(desc.Manufacturer[0]));
 	memcpy(d->MaxEyeFov, desc.MaxEyeFov, sizeof(d->MaxEyeFov));
 
 	d->ProductId = desc.ProductId;
-	strncpy_s((char*)d->ProductName, sizeof(d->ProductName), desc.ProductName, sizeof(desc.ProductName) / sizeof(desc.ProductName[0]));
+	strncpy_s((char*)d->ProductName, sizeof(char) * 64, desc.ProductName, sizeof(desc.ProductName) / sizeof(desc.ProductName[0]));
 	d->Resolution = desc.Resolution;
 
 	strncpy_s(d->SerialNumber, sizeof(d->SerialNumber), desc.SerialNumber, sizeof(d->SerialNumber) / sizeof(d->SerialNumber[0]));
