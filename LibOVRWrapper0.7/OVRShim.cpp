@@ -9,14 +9,16 @@
 	#define OVR_DLL_BUILD
 #endif
 
-#include "../LibOVR0.8/Include/OVR_CAPI_0_8_0.h"
-#include "../LibOVR0.8/Include/OVR_CAPI_D3D.h"
+#include "../LibOVR0.7/Include/OVR_CAPI_0_7_0.h"
+#include "../LibOVR0.7/Include/OVR_CAPI_D3D.h"
 
 #include "shimhelper.h"
 #include "OVRShim.h"
 
 OVR_PUBLIC_FUNCTION(ovrResult) ovr_Initialize(const ovrInitParams* params) {
 	initChains();
+
+	//TODO: handle ovrInit_ServerOptional ?
 
 	return ovr_Initialize1_3((ovrInitParams1_3*)params);
 }
@@ -30,14 +32,16 @@ OVR_PUBLIC_FUNCTION(void) ovr_GetLastErrorInfo(ovrErrorInfo* errorInfo) {
 }
 
 OVR_PUBLIC_FUNCTION(const char*) ovr_GetVersionString() {
-	return "OculusSDK0.8";
+	return "OculusSDK0.7";
 }
 
 OVR_PUBLIC_FUNCTION(int) ovr_TraceMessage(int level, const char* message) {
 	return ovr_TraceMessage1_3(level, message);
 }
 
-OVR_PUBLIC_FUNCTION(ovrHmdDesc) ovr_GetHmdDesc(ovrSession session) {
+float globalRefreshRate = 90.0f;
+
+OVR_PUBLIC_FUNCTION(ovrHmdDesc) ovr_GetHmdDesc(ovrHmd session) {
 	ovrHmdDesc1_3 desc = ovr_GetHmdDesc1_3((ovrSession1_3)session);
 
 	ovrHmdDesc d;
@@ -56,6 +60,7 @@ OVR_PUBLIC_FUNCTION(ovrHmdDesc) ovr_GetHmdDesc(ovrSession session) {
 	d.DefaultHmdCaps = desc.DefaultHmdCaps;
 	d.DefaultTrackingCaps = desc.DefaultTrackingCaps;
 	d.DisplayRefreshRate = desc.DisplayRefreshRate;
+	globalRefreshRate = desc.DisplayRefreshRate;
 	d.FirmwareMajor = desc.FirmwareMajor;
 	d.FirmwareMinor = desc.FirmwareMinor;
 	strncpy_s(d.Manufacturer, sizeof(d.Manufacturer), desc.Manufacturer, sizeof(d.Manufacturer) / sizeof(d.Manufacturer[0]));
@@ -68,8 +73,8 @@ OVR_PUBLIC_FUNCTION(ovrHmdDesc) ovr_GetHmdDesc(ovrSession session) {
 	strncpy_s(d.SerialNumber, sizeof(d.SerialNumber), desc.SerialNumber, sizeof(d.SerialNumber) / sizeof(d.SerialNumber[0]));
 	d.VendorId = desc.VendorId;
 
-	if (desc.Type > 12) {
-		d.Type = (ovrHmdType)12;
+	if (desc.Type > 11) {
+		d.Type = (ovrHmdType)11;
 	}
 	else {
 		d.Type = (ovrHmdType)desc.Type;
@@ -78,7 +83,7 @@ OVR_PUBLIC_FUNCTION(ovrHmdDesc) ovr_GetHmdDesc(ovrSession session) {
 	return d;
 }
 
-OVR_PUBLIC_FUNCTION(ovrResult) ovr_Create(ovrSession* pSession, ovrGraphicsLuid* pLuid) {
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_Create(ovrHmd* pSession, ovrGraphicsLuid* pLuid) {
 	ovrResult r = ovr_Create1_3((ovrSession1_3*)pSession, (ovrGraphicsLuid1_3*)pLuid);
 
 	if (!OVR_SUCCESS(r)) {
@@ -90,51 +95,28 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_Create(ovrSession* pSession, ovrGraphicsLuid*
 	return r;
 }
 
-OVR_PUBLIC_FUNCTION(void) ovr_Destroy(ovrSession session) {
+OVR_PUBLIC_FUNCTION(void) ovr_Destroy(ovrHmd session) {
 	ovr_Destroy1_3((ovrSession1_3)session);
 }
 
-OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetSessionStatus(ovrSession session, ovrSessionStatus* sessionStatus) {
-	ovrSessionStatus1_3 status;
-
-	ovrResult r = ovr_GetSessionStatus1_3((ovrSession1_3)session, &status);
-
-	sessionStatus->HmdPresent = status.HmdPresent;
-	sessionStatus->HasVrFocus = status.IsVisible;
-
-	if (status.ShouldRecenter) {
-		ovr_RecenterTrackingOrigin1_3((ovrSession1_3)session);
-
-		//or ovr_ClearShouldRecenterFlag?
-	}
-
-	return r;
-}
-
-OVR_PUBLIC_FUNCTION(unsigned int) ovr_GetEnabledCaps(ovrSession session) {
+OVR_PUBLIC_FUNCTION(unsigned int) ovr_GetEnabledCaps(ovrHmd session) {
 	ovrHmdDesc1_3 desc = ovr_GetHmdDesc1_3((ovrSession1_3)session);
 
 	//not possible anymore
 	return desc.DefaultHmdCaps;
 }
 
-OVR_PUBLIC_FUNCTION(void) ovr_SetEnabledCaps(ovrSession session, unsigned int hmdCaps) {
+OVR_PUBLIC_FUNCTION(void) ovr_SetEnabledCaps(ovrHmd session, unsigned int hmdCaps) {
 	//not possible anymore
 }
 
-OVR_PUBLIC_FUNCTION(unsigned int) ovr_GetTrackingCaps(ovrSession session) {
-	ovrHmdDesc1_3 desc = ovr_GetHmdDesc1_3((ovrSession1_3)session);
-
-	return desc.DefaultTrackingCaps;
-}
-
-OVR_PUBLIC_FUNCTION(ovrResult) ovr_ConfigureTracking(ovrSession session, unsigned int requestedTrackingCaps,
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_ConfigureTracking(ovrHmd session, unsigned int requestedTrackingCaps,
 	unsigned int requiredTrackingCaps) {
 	//not used anymore
 	return ovrSuccess1_3;
 }
 
-OVR_PUBLIC_FUNCTION(void) ovr_RecenterPose(ovrSession session) {
+OVR_PUBLIC_FUNCTION(void) ovr_RecenterPose(ovrHmd session) {
 	ovr_RecenterTrackingOrigin1_3((ovrSession1_3)session);
 }
 
@@ -157,9 +139,11 @@ void copyPoseState(ovrPoseStatef* dest, const ovrPoseStatef1_3* source) {
 	dest->TimeInSeconds = source->TimeInSeconds;
 }
 
-OVR_PUBLIC_FUNCTION(ovrTrackingState) ovr_GetTrackingState(ovrSession session, double absTime, ovrBool latencyMarker) {
-	ovrTrackingState1_3 state = ovr_GetTrackingState1_3((ovrSession1_3)session, absTime, latencyMarker);
-	ovrTrackerPose1_3 tpose = ovr_GetTrackerPose1_3((ovrSession1_3)session, 0);
+double globalTrackingStateTime = 0.0;
+
+OVR_PUBLIC_FUNCTION(ovrTrackingState) ovr_GetTrackingState(ovrHmd hmd, double absTime) {
+	ovrTrackingState1_3 state = ovr_GetTrackingState1_3((ovrSession1_3)hmd, absTime, ovrTrue);
+	ovrTrackerPose1_3 tpose = ovr_GetTrackerPose1_3((ovrSession1_3)hmd, 0);	
 
 	ovrTrackingState r;	
 	copyPose(&(r.CameraPose), &(tpose.Pose));
@@ -167,9 +151,6 @@ OVR_PUBLIC_FUNCTION(ovrTrackingState) ovr_GetTrackingState(ovrSession session, d
 	r.CameraPose.Position = tpose.Pose.Position;
 	copyPoseState(&(r.HandPoses[0]), &(state.HandPoses[0]));
 	copyPoseState(&(r.HandPoses[1]), &(state.HandPoses[1]));
-
-	r.HandStatusFlags[0] = state.HandStatusFlags[0];
-	r.HandStatusFlags[1] = state.HandStatusFlags[1];
 
 	copyPoseState(&(r.HeadPose), &(state.HeadPose));
 
@@ -180,10 +161,12 @@ OVR_PUBLIC_FUNCTION(ovrTrackingState) ovr_GetTrackingState(ovrSession session, d
 	//r.RawSensorData not filled
 	r.StatusFlags = state.StatusFlags | ovrStatus_CameraPoseTracked | ovrStatus_PositionConnected | ovrStatus_HmdConnected;
 	
+	globalTrackingStateTime = ovr_GetTimeInSeconds1_3();
+
 	return r;
 }
 
-OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetInputState(ovrSession session, unsigned int controllerTypeMask, ovrInputState* inputState) {
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetInputState(ovrHmd session, unsigned int controllerTypeMask, ovrInputState* inputState) {
 	ovrInputState1_3 state;
 
 	ovrResult res = ovr_GetInputState1_3((ovrSession1_3)session, (ovrControllerType1_3)controllerTypeMask, &state);
@@ -209,18 +192,18 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetInputState(ovrSession session, unsigned in
 	return res;
 }
 
-OVR_PUBLIC_FUNCTION(ovrResult) ovr_SetControllerVibration(ovrSession session, unsigned int controllerTypeMask,
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_SetControllerVibration(ovrHmd session, unsigned int controllerTypeMask,
 	float frequency, float amplitude) {
 	return ovr_SetControllerVibration1_3((ovrSession1_3)session, (ovrControllerType1_3)controllerTypeMask, frequency, amplitude);
 }
 
-OVR_PUBLIC_FUNCTION(void) ovr_DestroySwapTextureSet(ovrSession session, ovrSwapTextureSet* textureSet) {	
+OVR_PUBLIC_FUNCTION(void) ovr_DestroySwapTextureSet(ovrHmd session, ovrSwapTextureSet* textureSet) {	
 	ovr_DestroyTextureSwapChain1_3((ovrSession1_3)session, getChain((ovrSession1_3)session, textureSet)->swapChain);
 
 	removeChain((ovrSession1_3)session, textureSet);
 }
 
-OVR_PUBLIC_FUNCTION(void) ovr_DestroyMirrorTexture(ovrSession session, ovrTexture* mirrorTexture) {
+OVR_PUBLIC_FUNCTION(void) ovr_DestroyMirrorTexture(ovrHmd session, ovrTexture* mirrorTexture) {
 	ovrMirrorTexture1_3* mirror = getMirror();
 
 	ovr_DestroyMirrorTexture1_3((ovrSession1_3)session, *mirror);
@@ -234,7 +217,7 @@ OVR_PUBLIC_FUNCTION(void) ovr_DestroyMirrorTexture(ovrSession session, ovrTextur
 	}
 }
 
-OVR_PUBLIC_FUNCTION(ovrSizei) ovr_GetFovTextureSize(ovrSession session, ovrEyeType eye, ovrFovPort fov,
+OVR_PUBLIC_FUNCTION(ovrSizei) ovr_GetFovTextureSize(ovrHmd session, ovrEyeType eye, ovrFovPort fov,
 	float pixelsPerDisplayPixel) {
 	ovrFovPort1_3 fport;
 	fport.DownTan = fov.DownTan;
@@ -245,7 +228,7 @@ OVR_PUBLIC_FUNCTION(ovrSizei) ovr_GetFovTextureSize(ovrSession session, ovrEyeTy
 	return ovr_GetFovTextureSize1_3((ovrSession1_3)session, (ovrEyeType1_3)eye, fport, pixelsPerDisplayPixel);
 }
 
-OVR_PUBLIC_FUNCTION(ovrEyeRenderDesc) ovr_GetRenderDesc(ovrSession session,
+OVR_PUBLIC_FUNCTION(ovrEyeRenderDesc) ovr_GetRenderDesc(ovrHmd session,
 	ovrEyeType eyeType, ovrFovPort fov) {
 
 	ovrFovPort1_3 fport;
@@ -284,7 +267,7 @@ ovrTextureSwapChain1_3 renderChain(ovrSession1_3 session, ovrSwapTextureSet* ts)
 	return chainwrapper->swapChain;
 }
 
-OVR_PUBLIC_FUNCTION(ovrResult) ovr_SubmitFrame(ovrSession session, long long frameIndex,
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_SubmitFrame(ovrHmd session, unsigned int frameIndex,
 	const ovrViewScaleDesc* viewScaleDesc,
 	ovrLayerHeader const * const * layerPtrList, unsigned int layerCount) {
 
@@ -340,42 +323,13 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_SubmitFrame(ovrSession session, long long fra
 			copyPoseR(&elayer->RenderPose[0], &oldelayer->RenderPose[0]);
 			copyPoseR(&elayer->RenderPose[1], &oldelayer->RenderPose[1]);
 
-			elayer->SensorSampleTime = oldelayer->SensorSampleTime;
+			elayer->SensorSampleTime = globalTrackingStateTime;
 			elayer->Viewport[0] = oldelayer->Viewport[0];
 			elayer->Viewport[1] = oldelayer->Viewport[1];
 
 			newlayers[np] = (ovrLayerHeader1_3*)elayer;
-		}
-		else if (layer->Type == ovrLayerType_EyeMatrix) {
-			const ovrLayerEyeMatrix* oldelayer = (const ovrLayerEyeMatrix*)layer;
-			ovrLayerEyeMatrix1_3 *elayer = (ovrLayerEyeMatrix1_3*)malloc(sizeof(ovrLayerEyeMatrix1_3));
-
-			//if both eyes use same swaptextureset
-			if (oldelayer->ColorTexture[0] == oldelayer->ColorTexture[1]) {
-				elayer->ColorTexture[0] = renderChain((ovrSession1_3)session, oldelayer->ColorTexture[0]);
-				elayer->ColorTexture[1] = elayer->ColorTexture[0];
-			}
-			else {
-				elayer->ColorTexture[0] = renderChain((ovrSession1_3)session, oldelayer->ColorTexture[0]);
-				elayer->ColorTexture[1] = renderChain((ovrSession1_3)session, oldelayer->ColorTexture[1]);
-			}
-
-			elayer->Matrix[0] = oldelayer->Matrix[0];
-			elayer->Matrix[1] = oldelayer->Matrix[1];			
-
-			elayer->Header.Flags = oldelayer->Header.Flags;
-			elayer->Header.Type = (ovrLayerType1_3)oldelayer->Header.Type;
-
-			copyPoseR(&elayer->RenderPose[0], &oldelayer->RenderPose[0]);
-			copyPoseR(&elayer->RenderPose[1], &oldelayer->RenderPose[1]);
-
-			elayer->SensorSampleTime = oldelayer->SensorSampleTime;
-			elayer->Viewport[0] = oldelayer->Viewport[0];
-			elayer->Viewport[1] = oldelayer->Viewport[1];
-
-			newlayers[np] = (ovrLayerHeader1_3*)elayer;
-		}
-		else if (layer->Type == ovrLayerType_Quad) {
+		}		
+		else if (layer->Type == ovrLayerType_QuadInWorld) {
 			const ovrLayerQuad* oldelayer = (const ovrLayerQuad*)layer;
 			ovrLayerQuad1_3 *elayer = (ovrLayerQuad1_3*)malloc(sizeof(ovrLayerQuad1_3));
 
@@ -384,6 +338,22 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_SubmitFrame(ovrSession session, long long fra
 
 			elayer->ColorTexture = renderChain((ovrSession1_3)session, oldelayer->ColorTexture);
 			
+			copyPoseR(&elayer->QuadPoseCenter, &oldelayer->QuadPoseCenter);
+
+			elayer->QuadSize = oldelayer->QuadSize;
+
+			newlayers[np] = (ovrLayerHeader1_3*)elayer;
+		}
+		else if (layer->Type == ovrLayerType_QuadHeadLocked) {
+			const ovrLayerQuad* oldelayer = (const ovrLayerQuad*)layer;
+			ovrLayerQuad1_3 *elayer = (ovrLayerQuad1_3*)malloc(sizeof(ovrLayerQuad1_3));
+			
+			elayer->Header.Type = ovrLayerType1_3_Quad;
+			elayer->Header.Flags = layer->Flags;
+			elayer->Header.Flags |= ovrLayerFlag1_3_HeadLocked;
+
+			elayer->ColorTexture = renderChain((ovrSession1_3)session, oldelayer->ColorTexture);
+
 			copyPoseR(&elayer->QuadPoseCenter, &oldelayer->QuadPoseCenter);
 
 			elayer->QuadSize = oldelayer->QuadSize;
@@ -420,39 +390,46 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_SubmitFrame(ovrSession session, long long fra
 	return r;
 }
 
-OVR_PUBLIC_FUNCTION(double) ovr_GetPredictedDisplayTime(ovrSession session, long long frameIndex) {
-	return ovr_GetPredictedDisplayTime1_3((ovrSession1_3)session, frameIndex);
+OVR_PUBLIC_FUNCTION(ovrFrameTiming) ovr_GetFrameTiming(ovrHmd hmd, unsigned int frameIndex) {
+	ovrFrameTiming timing;
+
+	timing.AppFrameIndex = frameIndex;
+	timing.DisplayMidpointSeconds = ovr_GetPredictedDisplayTime1_3((ovrSession1_3)hmd, frameIndex);
+	timing.DisplayFrameIndex = frameIndex; //todo: calculate this somehow?
+	timing.FrameIntervalSeconds = 1.0f / globalRefreshRate; //todo: calculate this somehow?
+
+	return timing;
 }
 
 OVR_PUBLIC_FUNCTION(double) ovr_GetTimeInSeconds() {
 	return ovr_GetTimeInSeconds1_3();
 }
 
-OVR_PUBLIC_FUNCTION(void) ovr_ResetBackOfHeadTracking(ovrSession session) {
+OVR_PUBLIC_FUNCTION(void) ovr_ResetBackOfHeadTracking(ovrHmd session) {
 	//nothing
 }
 
-OVR_PUBLIC_FUNCTION(void) ovr_ResetMulticameraTracking(ovrSession session) {
+OVR_PUBLIC_FUNCTION(void) ovr_ResetMulticameraTracking(ovrHmd session) {
 	//nothing
 }
 
-OVR_PUBLIC_FUNCTION(ovrBool) ovr_GetBool(ovrSession session, const char* propertyName, ovrBool defaultVal) {
+OVR_PUBLIC_FUNCTION(ovrBool) ovr_GetBool(ovrHmd session, const char* propertyName, ovrBool defaultVal) {
 	return ovr_GetBool1_3((ovrSession1_3)session, propertyName, defaultVal);
 }
 
-OVR_PUBLIC_FUNCTION(ovrBool) ovr_SetBool(ovrSession session, const char* propertyName, ovrBool value) {
+OVR_PUBLIC_FUNCTION(ovrBool) ovr_SetBool(ovrHmd session, const char* propertyName, ovrBool value) {
 	return ovr_SetBool1_3((ovrSession1_3)session, propertyName, value);
 }
 
-OVR_PUBLIC_FUNCTION(int) ovr_GetInt(ovrSession session, const char* propertyName, int defaultVal) {
+OVR_PUBLIC_FUNCTION(int) ovr_GetInt(ovrHmd session, const char* propertyName, int defaultVal) {
 	return ovr_GetInt1_3((ovrSession1_3)session, propertyName, defaultVal);
 }
 
-OVR_PUBLIC_FUNCTION(ovrBool) ovr_SetInt(ovrSession session, const char* propertyName, int value) {
+OVR_PUBLIC_FUNCTION(ovrBool) ovr_SetInt(ovrHmd session, const char* propertyName, int value) {
 	return ovr_SetInt1_3((ovrSession1_3)session, propertyName, value);
 }
 
-OVR_PUBLIC_FUNCTION(float) ovr_GetFloat(ovrSession session, const char* propertyName, float defaultVal) {
+OVR_PUBLIC_FUNCTION(float) ovr_GetFloat(ovrHmd session, const char* propertyName, float defaultVal) {
 	if (strcmp(propertyName, OVR_KEY_IPD) == 0) {
 		float values[2];
 		ovr_GetFloatArray1_3((ovrSession1_3)session, OVR_KEY_NECK_TO_EYE_DISTANCE_1_3, values, 2);
@@ -463,7 +440,7 @@ OVR_PUBLIC_FUNCTION(float) ovr_GetFloat(ovrSession session, const char* property
 	return ovr_GetFloat1_3((ovrSession1_3)session, propertyName, defaultVal);
 }
 
-OVR_PUBLIC_FUNCTION(ovrBool) ovr_SetFloat(ovrSession session, const char* propertyName, float value) {
+OVR_PUBLIC_FUNCTION(ovrBool) ovr_SetFloat(ovrHmd session, const char* propertyName, float value) {
 	if (strcmp(propertyName, OVR_KEY_IPD) == 0) {
 		return ovrFalse;
 	}
@@ -471,27 +448,27 @@ OVR_PUBLIC_FUNCTION(ovrBool) ovr_SetFloat(ovrSession session, const char* proper
 	return ovr_SetFloat1_3((ovrSession1_3)session, propertyName, value);
 }
 
-OVR_PUBLIC_FUNCTION(unsigned int) ovr_GetFloatArray(ovrSession session, const char* propertyName,
+OVR_PUBLIC_FUNCTION(unsigned int) ovr_GetFloatArray(ovrHmd session, const char* propertyName,
 	float values[], unsigned int valuesCapacity) {
 	return ovr_GetFloatArray1_3((ovrSession1_3)session, propertyName, values, valuesCapacity);
 }
 
-OVR_PUBLIC_FUNCTION(ovrBool) ovr_SetFloatArray(ovrSession session, const char* propertyName,
+OVR_PUBLIC_FUNCTION(ovrBool) ovr_SetFloatArray(ovrHmd session, const char* propertyName,
 	const float values[], unsigned int valuesSize) {
 	return ovr_SetFloatArray1_3((ovrSession1_3)session, propertyName, values, valuesSize);
 }
 
-OVR_PUBLIC_FUNCTION(const char*) ovr_GetString(ovrSession session, const char* propertyName,
+OVR_PUBLIC_FUNCTION(const char*) ovr_GetString(ovrHmd session, const char* propertyName,
 	const char* defaultVal) {
 	return ovr_GetString1_3((ovrSession1_3)session, propertyName, defaultVal);
 }
 
-OVR_PUBLIC_FUNCTION(ovrBool) ovr_SetString(ovrSession session, const char* propertyName,
+OVR_PUBLIC_FUNCTION(ovrBool) ovr_SetString(ovrHmd session, const char* propertyName,
 	const char* value) {
 	return ovr_SetString1_3((ovrSession1_3)session, propertyName, value);
 }
 
-OVR_PUBLIC_FUNCTION(ovrResult) ovr_SetQueueAheadFraction(ovrSession session, float queueAheadFraction) {
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_SetQueueAheadFraction(ovrHmd session, float queueAheadFraction) {
 	return ovr_SetQueueAheadFraction1_3((ovrSession1_3)session, queueAheadFraction);
 }
 
@@ -500,12 +477,12 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_Lookup(const char* name, void** data) {
 }
 
 //these two functions below are just for debugging purposes
-OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetTextureSwapChainCurrentIndex(ovrSession session, ovrSwapTextureSet* textureSet, int* currentIndex) {
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetTextureSwapChainCurrentIndex(ovrHmd session, ovrSwapTextureSet* textureSet, int* currentIndex) {
 	ovrTextureSwapChain1_3 chain = getChain((ovrSession1_3)session, textureSet)->swapChain;
 
 	return ovr_GetTextureSwapChainCurrentIndex1_3((ovrSession1_3)session, chain, currentIndex);
 }
 
-OVR_PUBLIC_FUNCTION(ovrResult) ovr_CommitTextureSwapChain(ovrSession session, ovrSwapTextureSet* textureSet) {
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_CommitTextureSwapChain(ovrHmd session, ovrSwapTextureSet* textureSet) {
 	return ovr_CommitTextureSwapChain1_3((ovrSession1_3)session, getChain((ovrSession1_3)session, textureSet)->swapChain);
 }
