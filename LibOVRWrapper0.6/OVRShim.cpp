@@ -16,6 +16,8 @@
 #include "OVRShim.h"
 
 OVR_PUBLIC_FUNCTION(ovrResult) ovr_Initialize(const ovrInitParams* params) {
+	BOOST_LOG_TRIVIAL(trace) << "ovr_Initialize";
+
 	initChains();
 
 	//TODO: handle ovrInit_ServerOptional ?
@@ -24,6 +26,8 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_Initialize(const ovrInitParams* params) {
 }
 
 OVR_PUBLIC_FUNCTION(void) ovr_Shutdown() {
+	BOOST_LOG_TRIVIAL(trace) << "ovr_Shutdown";
+
 	ovr_Shutdown1_3();
 }
 
@@ -32,6 +36,8 @@ OVR_PUBLIC_FUNCTION(void) ovr_GetLastErrorInfo(ovrErrorInfo* errorInfo) {
 }
 
 OVR_PUBLIC_FUNCTION(const char*) ovr_GetVersionString() {
+	BOOST_LOG_TRIVIAL(trace) << "ovr_GetVersionString";
+
 	return "OculusSDK0.7";
 }
 
@@ -42,11 +48,15 @@ OVR_PUBLIC_FUNCTION(int) ovr_TraceMessage(int level, const char* message) {
 float globalRefreshRate = 90.0f;
 
 OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_CreateDebug(ovrHmdType type, ovrHmd* pHmd) {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_CreateDebug";
+
 	//todo: needed?
 	return -1;
 }
 
 OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_Detect() {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_Detect";
+
 	ovrHmdDesc1_3 desc = ovr_GetHmdDesc1_3(NULL);
 
 	if (desc.Type == ovrHmd_None) {
@@ -59,6 +69,8 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_Detect() {
 ovrGraphicsLuid1_3 globalGraphicsLuid;
 
 OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_Create(int index, ovrHmd* pHmd) {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_Create";
+
 	ovrSession1_3 pSession;
 	ovrGraphicsLuid1_3 pLuid;
 
@@ -118,10 +130,14 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_Create(int index, ovrHmd* pHmd) {
 }
 
 OVR_PUBLIC_FUNCTION(void) ovrHmd_Destroy(ovrHmd hmd) {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_Destroy";
+
 	ovr_Destroy1_3((ovrSession1_3)hmd->Handle);
 }
 
 OVR_PUBLIC_FUNCTION(unsigned int) ovrHmd_GetEnabledCaps(ovrHmd hmd) {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetEnabledCaps";
+
 	ovrHmdDesc1_3 desc = ovr_GetHmdDesc1_3((ovrSession1_3)hmd->Handle);
 
 	//not possible anymore
@@ -129,16 +145,20 @@ OVR_PUBLIC_FUNCTION(unsigned int) ovrHmd_GetEnabledCaps(ovrHmd hmd) {
 }
 
 OVR_PUBLIC_FUNCTION(void) ovrHmd_SetEnabledCaps(ovrHmd hmd, unsigned int hmdCaps) {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_SetEnabledCaps";
 	//not possible anymore
 }
 
 OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_ConfigureTracking(ovrHmd hmd, unsigned int requestedTrackingCaps,
 	unsigned int requiredTrackingCaps) {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_ConfigureTracking";
 	//not used anymore
 	return ovrSuccess1_3;
 }
 
 OVR_PUBLIC_FUNCTION(void) ovrHmd_RecenterPose(ovrHmd hmd) {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_RecenterPose";
+
 	ovr_RecenterTrackingOrigin1_3((ovrSession1_3)hmd->Handle);
 }
 
@@ -164,6 +184,8 @@ void copyPoseState(ovrPoseStatef* dest, const ovrPoseStatef1_3* source) {
 double globalTrackingStateTime = 0.0;
 
 OVR_PUBLIC_FUNCTION(ovrTrackingState) ovrHmd_GetTrackingState(ovrHmd hmd, double absTime) {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetTrackingState";
+
 	ovrTrackingState1_3 state = ovr_GetTrackingState1_3((ovrSession1_3)hmd->Handle, absTime, ovrTrue);
 	ovrTrackerPose1_3 tpose = ovr_GetTrackerPose1_3((ovrSession1_3)hmd->Handle, 0);	
 
@@ -187,12 +209,16 @@ OVR_PUBLIC_FUNCTION(ovrTrackingState) ovrHmd_GetTrackingState(ovrHmd hmd, double
 }
 
 OVR_PUBLIC_FUNCTION(void) ovrHmd_DestroySwapTextureSet(ovrHmd hmd, ovrSwapTextureSet* textureSet) {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_DestroySwapTextureSet";
+
 	ovr_DestroyTextureSwapChain1_3((ovrSession1_3)hmd->Handle, getChain((ovrSession1_3)hmd->Handle, textureSet)->swapChain);
 
 	removeChain((ovrSession1_3)hmd->Handle, textureSet);
 }
 
 OVR_PUBLIC_FUNCTION(void) ovrHmd_DestroyMirrorTexture(ovrHmd hmd, ovrTexture* mirrorTexture) {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_DestroyMirrorTexture";
+
 	ovrMirrorTexture1_3* mirror = getMirror();
 
 	ovr_DestroyMirrorTexture1_3((ovrSession1_3)hmd->Handle, *mirror);
@@ -208,6 +234,8 @@ OVR_PUBLIC_FUNCTION(void) ovrHmd_DestroyMirrorTexture(ovrHmd hmd, ovrTexture* mi
 
 OVR_PUBLIC_FUNCTION(ovrSizei) ovrHmd_GetFovTextureSize(ovrHmd hmd, ovrEyeType eye, ovrFovPort fov,
 	float pixelsPerDisplayPixel) {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetFovTextureSize";
+	
 	ovrFovPort1_3 fport;
 	fport.DownTan = fov.DownTan;
 	fport.LeftTan = fov.LeftTan;
@@ -219,6 +247,7 @@ OVR_PUBLIC_FUNCTION(ovrSizei) ovrHmd_GetFovTextureSize(ovrHmd hmd, ovrEyeType ey
 
 OVR_PUBLIC_FUNCTION(ovrEyeRenderDesc) ovrHmd_GetRenderDesc(ovrHmd hmd,
 	ovrEyeType eyeType, ovrFovPort fov) {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetRenderDesc";
 
 	ovrFovPort1_3 fport;
 	fport.DownTan = fov.DownTan;
@@ -259,6 +288,7 @@ ovrTextureSwapChain1_3 renderChain(ovrSession1_3 session, ovrSwapTextureSet* ts)
 OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_SubmitFrame(ovrHmd hmd, unsigned int frameIndex,
 	const ovrViewScaleDesc* viewScaleDesc,
 	ovrLayerHeader const * const * layerPtrList, unsigned int layerCount) {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_SubmitFrame";
 
 	//ovrLayerType 2, 6 do not exists anymore. max layer count is 16 instead of 32
 
@@ -380,6 +410,8 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_SubmitFrame(ovrHmd hmd, unsigned int frame
 }
 
 OVR_PUBLIC_FUNCTION(ovrFrameTiming) ovrHmd_GetFrameTiming(ovrHmd hmd, unsigned int frameIndex) {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetFrameTiming";
+
 	ovrFrameTiming timing;
 
 	timing.AppFrameIndex = frameIndex;
@@ -391,34 +423,38 @@ OVR_PUBLIC_FUNCTION(ovrFrameTiming) ovrHmd_GetFrameTiming(ovrHmd hmd, unsigned i
 }
 
 OVR_PUBLIC_FUNCTION(double) ovrHmd_GetTimeInSeconds() {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetTimeInSeconds";
+
 	return ovr_GetTimeInSeconds1_3();
 }
 
-OVR_PUBLIC_FUNCTION(void) ovrHmd_ResetBackOfHeadTracking(ovrHmd hmd) {
-	//nothing
-}
-
-OVR_PUBLIC_FUNCTION(void) ovrHmd_ResetMulticameraTracking(ovrHmd hmd) {
-	//nothing
-}
-
 OVR_PUBLIC_FUNCTION(ovrBool) ovrHmd_GetBool(ovrHmd hmd, const char* propertyName, ovrBool defaultVal) {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetBool";
+
 	return ovr_GetBool1_3((ovrSession1_3)hmd->Handle, propertyName, defaultVal);
 }
 
 OVR_PUBLIC_FUNCTION(ovrBool) ovrHmd_SetBool(ovrHmd hmd, const char* propertyName, ovrBool value) {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_SetBool";
+
 	return ovr_SetBool1_3((ovrSession1_3)hmd->Handle, propertyName, value);
 }
 
 OVR_PUBLIC_FUNCTION(int) ovrHmd_GetInt(ovrHmd hmd, const char* propertyName, int defaultVal) {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetInt";
+
 	return ovr_GetInt1_3((ovrSession1_3)hmd->Handle, propertyName, defaultVal);
 }
 
 OVR_PUBLIC_FUNCTION(ovrBool) ovrHmd_SetInt(ovrHmd hmd, const char* propertyName, int value) {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_SetInt";
+
 	return ovr_SetInt1_3((ovrSession1_3)hmd->Handle, propertyName, value);
 }
 
 OVR_PUBLIC_FUNCTION(float) ovrHmd_GetFloat(ovrHmd hmd, const char* propertyName, float defaultVal) {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetFloat";
+
 	if (strcmp(propertyName, OVR_KEY_IPD) == 0) {
 		float values[2];
 		ovr_GetFloatArray1_3((ovrSession1_3)hmd->Handle, OVR_KEY_NECK_TO_EYE_DISTANCE_1_3, values, 2);
@@ -430,6 +466,8 @@ OVR_PUBLIC_FUNCTION(float) ovrHmd_GetFloat(ovrHmd hmd, const char* propertyName,
 }
 
 OVR_PUBLIC_FUNCTION(ovrBool) ovrHmd_SetFloat(ovrHmd hmd, const char* propertyName, float value) {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_SetFloat";
+
 	if (strcmp(propertyName, OVR_KEY_IPD) == 0) {
 		return ovrTrue;
 	} else if (strcmp(propertyName, "QueueAheadSeconds") == 0) {
@@ -441,25 +479,35 @@ OVR_PUBLIC_FUNCTION(ovrBool) ovrHmd_SetFloat(ovrHmd hmd, const char* propertyNam
 
 OVR_PUBLIC_FUNCTION(unsigned int) ovrHmd_GetFloatArray(ovrHmd hmd, const char* propertyName,
 	float values[], unsigned int valuesCapacity) {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetFloatArray";
+
 	return ovr_GetFloatArray1_3((ovrSession1_3)hmd->Handle, propertyName, values, valuesCapacity);
 }
 
 OVR_PUBLIC_FUNCTION(ovrBool) ovrHmd_SetFloatArray(ovrHmd hmd, const char* propertyName,
 	const float values[], unsigned int valuesSize) {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_SetFloatArray";
+
 	return ovr_SetFloatArray1_3((ovrSession1_3)hmd->Handle, propertyName, values, valuesSize);
 }
 
 OVR_PUBLIC_FUNCTION(const char*) ovrHmd_GetString(ovrHmd hmd, const char* propertyName,
 	const char* defaultVal) {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetString";
+
 	return ovr_GetString1_3((ovrSession1_3)hmd->Handle, propertyName, defaultVal);
 }
 
 OVR_PUBLIC_FUNCTION(ovrBool) ovrHmd_SetString(ovrHmd hmd, const char* propertyName,
 	const char* value) {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_SetString";
+
 	return ovr_SetString1_3((ovrSession1_3)hmd->Handle, propertyName, value);
 }
 
 OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_Lookup(const char* name, void** data) {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_Lookup";
+
 	return ovr_Lookup1_3(name, data);
 }
 
