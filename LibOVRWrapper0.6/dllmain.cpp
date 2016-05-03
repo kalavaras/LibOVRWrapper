@@ -16,6 +16,8 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 			int loglevel = 0;
 			const char inifile[] = "LibOVRWrapper.ini";
 
+			boost::shared_ptr<sinks::synchronous_sink<sinks::text_file_backend>> sink = nullptr;
+
 			if (std::ifstream(inifile)) {
 				boost::property_tree::ptree pt;
 				try {
@@ -23,7 +25,11 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 
 					loglevel = pt.get<int>("logging.loglevel", 0);
 					if (loglevel > 0) {
-						logging::add_file_log("LibOVRWrapper.log");
+						sink = logging::add_file_log(
+							keywords::file_name = "LibOVRWrapper.log", 
+							keywords::auto_flush = true
+						);
+						
 					}
 
 				}
@@ -60,6 +66,8 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 				);
 				break;			
 			}
+
+			BOOST_LOG_TRIVIAL(info) << "Initialized logging";			
 		}		
 		break;
 	case DLL_THREAD_ATTACH:

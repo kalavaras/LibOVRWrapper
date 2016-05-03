@@ -87,7 +87,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_Create(int index, ovrHmd* pHmd) {
 	ovrHmdDesc* d = (ovrHmdDesc*)malloc(sizeof(ovrHmdDesc));
 
 	d->Handle = (ovrHmdStruct*)pSession;
-	d->HmdCaps = desc.AvailableHmdCaps;
+	d->HmdCaps = ovrHmdCap_LowPersistence | ovrHmdCap_DynamicPrediction;
 	d->TrackingCaps = desc.AvailableTrackingCaps;
 
 	ovrTrackerDesc1_3 tracker = ovr_GetTrackerDesc1_3(pSession, 0);
@@ -121,6 +121,9 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_Create(int index, ovrHmd* pHmd) {
 	else {
 		d->Type = (ovrHmdType)desc.Type;
 	}
+
+	d->EyeRenderOrder[0] = ovrEye_Left;
+	d->EyeRenderOrder[1] = ovrEye_Right;
 
 	ovr_SetTrackingOriginType1_3(*(ovrSession1_3*)pSession, ovrTrackingOrigin1_3_EyeLevel);
 

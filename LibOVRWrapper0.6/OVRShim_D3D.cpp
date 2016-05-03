@@ -61,10 +61,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_CreateSwapTextureSetD3D11(ovrHmd hmd,
 	ID3D11Device* device,
 	const D3D11_TEXTURE2D_DESC* desc,
 	ovrSwapTextureSet** outTextureSet) {
-	
-	char buffer[100];
-	sprintf_s(buffer, sizeof(buffer), "ovrHmd_CreateSwapTextureSetD3D11 format %d", desc->Format);
-	OutputDebugStringA(buffer);
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_CreateSwapTextureSetD3D11";
 
 	D3D11_TEXTURE2D_DESC descClone;
 	memcpy(&descClone, desc, sizeof(D3D11_TEXTURE2D_DESC));
@@ -188,6 +185,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_CreateMirrorTextureD3D11(ovrHmd hmd,
 	ID3D11Device* device,
 	const D3D11_TEXTURE2D_DESC* desc,
 	ovrTexture** outMirrorTexture) {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_CreateMirrorTextureD3D11";
 
 	ovrMirrorTextureDesc1_3 d;
 	
