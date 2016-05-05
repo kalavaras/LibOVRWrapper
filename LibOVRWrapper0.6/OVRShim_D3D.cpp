@@ -52,6 +52,8 @@ ovrTextureFormat1_3 getOVRFormat(DXGI_FORMAT format) {
 			return OVR_FORMAT_D16_UNORM;
 		case DXGI_FORMAT_R32G8X24_TYPELESS:
 			return OVR_FORMAT_D32_FLOAT_S8X24_UINT;
+		case DXGI_FORMAT_R8G8B8A8_TYPELESS:
+			return OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
 	}
 	
 	return OVR_FORMAT_UNKNOWN;		
@@ -61,7 +63,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_CreateSwapTextureSetD3D11(ovrHmd hmd,
 	ID3D11Device* device,
 	const D3D11_TEXTURE2D_DESC* desc,
 	ovrSwapTextureSet** outTextureSet) {
-	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_CreateSwapTextureSetD3D11";
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_CreateSwapTextureSetD3D11 format " << desc->Format << " samples " << desc->SampleDesc.Count << " bindflags " << desc->BindFlags << " miscflags " << desc->MiscFlags;
 
 	D3D11_TEXTURE2D_DESC descClone;
 	memcpy(&descClone, desc, sizeof(D3D11_TEXTURE2D_DESC));
@@ -83,37 +85,47 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_CreateSwapTextureSetD3D11(ovrHmd hmd,
 	
 	d.MiscFlags = 0;
 	
-	switch (d.Format) {
-	case OVR_FORMAT_R8G8B8A8_UNORM_SRGB:
-		d.MiscFlags |= ovrTextureMisc_DX_Typeless;
-		descClone.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		break;
-	case OVR_FORMAT_B8G8R8A8_UNORM_SRGB:
-		d.MiscFlags |= ovrTextureMisc_DX_Typeless;
-		descClone.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-		break;
-	case OVR_FORMAT_B8G8R8X8_UNORM_SRGB:
-		d.MiscFlags |= ovrTextureMisc_DX_Typeless;
-		descClone.Format = DXGI_FORMAT_B8G8R8X8_UNORM;
-		break;	
+	if (!(desc->Format == DXGI_FORMAT_R8G8B8A8_UNORM_SRGB || 
+		desc->Format == DXGI_FORMAT_B8G8R8A8_UNORM_SRGB || 
+		desc->Format == DXGI_FORMAT_B8G8R8X8_UNORM_SRGB)) {
+
+		switch (d.Format) {
+		case OVR_FORMAT_R8G8B8A8_UNORM_SRGB:
+			d.MiscFlags |= ovrTextureMisc_DX_Typeless;
+			descClone.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+			break;
+		case OVR_FORMAT_B8G8R8A8_UNORM_SRGB:
+			d.MiscFlags |= ovrTextureMisc_DX_Typeless;
+			descClone.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+			break;
+		case OVR_FORMAT_B8G8R8X8_UNORM_SRGB:
+			d.MiscFlags |= ovrTextureMisc_DX_Typeless;
+			descClone.Format = DXGI_FORMAT_B8G8R8X8_UNORM;
+			break;
+		}
+		switch (desc->Format) {
+		case DXGI_FORMAT_R32_TYPELESS:
+			//descClone.Format = DXGI_FORMAT_D32_FLOAT;		
+			//descClone.MiscFlags |= D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS;
+			break;
+		case DXGI_FORMAT_R24G8_TYPELESS:
+			//descClone.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+			break;
+		case DXGI_FORMAT_R16_TYPELESS:
+			//descClone.Format = DXGI_FORMAT_D16_UNORM;
+			break;
+		case DXGI_FORMAT_R32G8X24_TYPELESS:
+			//descClone.Format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
+			break;
+		case DXGI_FORMAT_R8G8B8A8_TYPELESS:
+			//d.MiscFlags |= ovrTextureMisc_DX_Typeless;
+			//descClone.Format = DXGI_FORMAT_R8G8B8A8_TYPELESS;
+			break;
+		}
 	}
-	switch (desc->Format) {
-	case DXGI_FORMAT_R32_TYPELESS:
-		//descClone.Format = DXGI_FORMAT_D32_FLOAT;		
-		//descClone.MiscFlags |= D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS;
-		break;
-	case DXGI_FORMAT_R24G8_TYPELESS:
-		//descClone.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-		break;
-	case DXGI_FORMAT_R16_TYPELESS:
-		//descClone.Format = DXGI_FORMAT_D16_UNORM;
-		break;
-	case DXGI_FORMAT_R32G8X24_TYPELESS:
-		//descClone.Format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
-		break;
-	}
+
 	
-	BOOL makeShaderView = 0;
+	bool makeShaderView = false;
 	d.BindFlags = 0;
 	/*if (desc->BindFlags & D3D11_BIND_RENDER_TARGET) {
 		d.BindFlags |= ovrTextureBind_DX_RenderTarget;
@@ -122,17 +134,19 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_CreateSwapTextureSetD3D11(ovrHmd hmd,
 		d.BindFlags |= ovrTextureBind_DX_UnorderedAccess;
 	}*/
 	if (desc->BindFlags & D3D11_BIND_DEPTH_STENCIL) {
+		d.MiscFlags |= ovrTextureMisc_DX_Typeless;
 		d.BindFlags |= ovrTextureBind_DX_DepthStencil;
-	}
-	if (desc->BindFlags & D3D11_BIND_SHADER_RESOURCE) {
-		makeShaderView = 1;
 	}	
+	if (desc->BindFlags & D3D11_BIND_SHADER_RESOURCE) {
+		
+		makeShaderView = true;
+	}
 	
 	d.StaticImage = ovrFalse;
 
 	ovrTextureSwapChainWrapper* chainwrapper = (ovrTextureSwapChainWrapper*)malloc(sizeof(ovrTextureSwapChainWrapper));
-	GetContext(device, &chainwrapper->pContext);
-	
+	device->GetImmediateContext(&chainwrapper->pContext);
+
 	ovrResult result = ovr_CreateTextureSwapChainDX1_3((ovrSession1_3)hmd->Handle, (IUnknown*)device, &d, &chainwrapper->swapChain);
 
 	if (!OVR_SUCCESS(result))
@@ -158,17 +172,35 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_CreateSwapTextureSetD3D11(ovrHmd hmd,
 	for (int i = 0;i < 2;i++) {
 		union ovrD3D11Texture* ovrtext = (union ovrD3D11Texture*)&ts->Textures[i];
 
-		HRESULT hr = device->CreateTexture2D(&descClone, NULL, &ovrtext->D3D11.pTexture);
+		HRESULT hr = device->CreateTexture2D(&descClone, nullptr, &ovrtext->D3D11.pTexture);
 
 		if (hr < 0) {
 			return ovrError_ServiceError;
 		}
 
 		if (makeShaderView) {
-			HRESULT rs = device->CreateShaderResourceView((ID3D11Resource*)ovrtext->D3D11.pTexture, NULL, &ovrtext->D3D11.pSRView);	
-			/*if (rs < 0) {
+			HRESULT rs;
+
+			D3D11_SHADER_RESOURCE_VIEW_DESC depthSrv;
+			switch (desc->Format)
+			{
+			case DXGI_FORMAT_R32_TYPELESS:      depthSrv.Format = DXGI_FORMAT_R32_FLOAT;    break;
+			case DXGI_FORMAT_R24G8_TYPELESS:    depthSrv.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;    break;
+			case DXGI_FORMAT_R16_TYPELESS:      depthSrv.Format = DXGI_FORMAT_R16_UNORM;    break;
+			case DXGI_FORMAT_R32G8X24_TYPELESS: depthSrv.Format = DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS; break;
+			case DXGI_FORMAT_R8G8B8A8_TYPELESS: depthSrv.Format = DXGI_FORMAT_R8G8B8A8_UNORM; break;
+			
+			default:    depthSrv.Format = descClone.Format;
+			}
+			depthSrv.ViewDimension = desc->SampleDesc.Count > 1 ? D3D11_SRV_DIMENSION_TEXTURE2DMS : D3D11_SRV_DIMENSION_TEXTURE2D;
+			depthSrv.Texture2D.MostDetailedMip = 0;
+			depthSrv.Texture2D.MipLevels = desc->MipLevels;
+
+			rs = device->CreateShaderResourceView((ID3D11Resource*)ovrtext->D3D11.pTexture, &depthSrv, &ovrtext->D3D11.pSRView);
+			
+			if (rs < 0) {
 				return ovrError_ServiceError;
-			}*/
+			}
 		}
 
 		ovrtext->D3D11.Header.API = ovrRenderAPI_D3D11;

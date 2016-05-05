@@ -30,6 +30,9 @@
     <ClInclude Include="shimhelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="OVR_StereoProjection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -157,6 +160,12 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\..\lib\native\src\boost_log.unhandled_exception_count.cpp">
       <Filter>Source Files\boost</Filter>
+    </ClCompile>
+    <ClCompile Include="OVR_CAPI_Util.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OVR_StereoProjection.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

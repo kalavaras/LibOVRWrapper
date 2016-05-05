@@ -125,7 +125,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_Create(int index, ovrHmd* pHmd) {
 	d->EyeRenderOrder[0] = ovrEye_Left;
 	d->EyeRenderOrder[1] = ovrEye_Right;
 
-	ovr_SetTrackingOriginType1_3(*(ovrSession1_3*)pSession, ovrTrackingOrigin1_3_EyeLevel);
+	ovr_SetTrackingOriginType1_3(pSession, ovrTrackingOrigin1_3_EyeLevel);
 
 	*pHmd = d;
 
@@ -185,13 +185,14 @@ void copyPoseState(ovrPoseStatef* dest, const ovrPoseStatef1_3* source) {
 }
 
 double globalTrackingStateTime = 0.0;
+uint32_t globalLastCameraFrameCounter = 0;
 
 OVR_PUBLIC_FUNCTION(ovrTrackingState) ovrHmd_GetTrackingState(ovrHmd hmd, double absTime) {
 	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetTrackingState";
 
 	ovrTrackingState1_3 state = ovr_GetTrackingState1_3((ovrSession1_3)hmd->Handle, absTime, ovrTrue);
 	ovrTrackerPose1_3 tpose = ovr_GetTrackerPose1_3((ovrSession1_3)hmd->Handle, 0);	
-
+	
 	ovrTrackingState r;	
 	copyPose(&(r.CameraPose), &(tpose.Pose));
 	r.CameraPose.Orientation = tpose.Pose.Orientation;
@@ -200,10 +201,27 @@ OVR_PUBLIC_FUNCTION(ovrTrackingState) ovrHmd_GetTrackingState(ovrHmd hmd, double
 	copyPoseState(&(r.HeadPose), &(state.HeadPose));
 
 	//r.LastCameraFrameCounter not filled
+	r.LastCameraFrameCounter = ++globalLastCameraFrameCounter;
 
 	copyPose(&(r.LeveledCameraPose), &(tpose.LeveledPose));
 
 	//r.RawSensorData not filled
+	r.RawSensorData.Accelerometer.x = 0;
+	r.RawSensorData.Accelerometer.y = 0;
+	r.RawSensorData.Accelerometer.z = 0;
+
+	r.RawSensorData.Gyro.x = 0;
+	r.RawSensorData.Gyro.y = 0;
+	r.RawSensorData.Gyro.z = 0;
+
+	r.RawSensorData.Magnetometer.x = 0;
+	r.RawSensorData.Magnetometer.y = 0;
+	r.RawSensorData.Magnetometer.z = 0;
+
+	r.RawSensorData.Temperature = 20.0f;
+
+	r.RawSensorData.TimeInSeconds = (float)ovr_GetTimeInSeconds1_3();
+
 	r.StatusFlags = state.StatusFlags | ovrStatus_CameraPoseTracked | ovrStatus_PositionConnected | ovrStatus_HmdConnected;
 	
 	globalTrackingStateTime = ovr_GetTimeInSeconds1_3();
@@ -297,7 +315,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_SubmitFrame(ovrHmd hmd, unsigned int frame
 
 	unsigned int trueLayerCount = 0;
 	for (unsigned int i = 0;i < layerCount;i++) {
-		if (layerPtrList[i] != NULL) {
+		if (layerPtrList[i] != nullptr) {
 			trueLayerCount++;
 		}
 	}
@@ -306,14 +324,14 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_SubmitFrame(ovrHmd hmd, unsigned int frame
 		trueLayerCount = 16; //ignore layer counts > 16
 	}	
 
-	ovrLayerHeader1_3** newlayers = (ovrLayerHeader1_3**)malloc(sizeof(ovrLayerHeader1_3*) * trueLayerCount);
+	ovrLayerHeader1_3* newlayers[16];
 	
 	unsigned int np = 0;
 
 	for (unsigned int i = 0;i < layerCount;i++) {
 		const ovrLayerHeader* layer = layerPtrList[i];
 
-		if (layer == NULL) {
+		if (layer == nullptr) {
 			continue;
 		}
 
@@ -404,14 +422,14 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_SubmitFrame(ovrHmd hmd, unsigned int frame
 	ovrResult r = ovr_SubmitFrame1_3((ovrSession1_3)hmd->Handle, frameIndex, (const ovrViewScaleDesc1_3*)viewScaleDesc, newlayers, trueLayerCount);
 
 	for (unsigned int i = 0;i < trueLayerCount;i++) {
-		free(newlayers[i]);
+		if(newlayers[i] != nullptr)
+			free(newlayers[i]);
 	}
-
-	free(newlayers);
 
 	return r;
 }
 
+unsigned int globalFrameIndex = 0;
 OVR_PUBLIC_FUNCTION(ovrFrameTiming) ovrHmd_GetFrameTiming(ovrHmd hmd, unsigned int frameIndex) {
 	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetFrameTiming";
 
@@ -425,38 +443,44 @@ OVR_PUBLIC_FUNCTION(ovrFrameTiming) ovrHmd_GetFrameTiming(ovrHmd hmd, unsigned i
 	return timing;
 }
 
-OVR_PUBLIC_FUNCTION(double) ovrHmd_GetTimeInSeconds() {
-	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetTimeInSeconds";
+OVR_PUBLIC_FUNCTION(void) ovrHmd_ResetFrameTiming(ovrHmd hmd, unsigned int frameIndex) {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_ResetFrameTiming";
+
+	globalFrameIndex = frameIndex;
+}
+
+OVR_PUBLIC_FUNCTION(double) ovr_GetTimeInSeconds() {
+	BOOST_LOG_TRIVIAL(trace) << "ovr_GetTimeInSeconds";
 
 	return ovr_GetTimeInSeconds1_3();
 }
 
 OVR_PUBLIC_FUNCTION(ovrBool) ovrHmd_GetBool(ovrHmd hmd, const char* propertyName, ovrBool defaultVal) {
-	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetBool";
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetBool " << propertyName;
 
 	return ovr_GetBool1_3((ovrSession1_3)hmd->Handle, propertyName, defaultVal);
 }
 
 OVR_PUBLIC_FUNCTION(ovrBool) ovrHmd_SetBool(ovrHmd hmd, const char* propertyName, ovrBool value) {
-	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_SetBool";
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_SetBool " << propertyName;
 
 	return ovr_SetBool1_3((ovrSession1_3)hmd->Handle, propertyName, value);
 }
 
 OVR_PUBLIC_FUNCTION(int) ovrHmd_GetInt(ovrHmd hmd, const char* propertyName, int defaultVal) {
-	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetInt";
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetInt " << propertyName;
 
 	return ovr_GetInt1_3((ovrSession1_3)hmd->Handle, propertyName, defaultVal);
 }
 
 OVR_PUBLIC_FUNCTION(ovrBool) ovrHmd_SetInt(ovrHmd hmd, const char* propertyName, int value) {
-	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_SetInt";
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_SetInt " << propertyName;
 
 	return ovr_SetInt1_3((ovrSession1_3)hmd->Handle, propertyName, value);
 }
 
 OVR_PUBLIC_FUNCTION(float) ovrHmd_GetFloat(ovrHmd hmd, const char* propertyName, float defaultVal) {
-	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetFloat";
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetFloat " << propertyName;
 
 	if (strcmp(propertyName, OVR_KEY_IPD) == 0) {
 		float values[2];
@@ -469,7 +493,7 @@ OVR_PUBLIC_FUNCTION(float) ovrHmd_GetFloat(ovrHmd hmd, const char* propertyName,
 }
 
 OVR_PUBLIC_FUNCTION(ovrBool) ovrHmd_SetFloat(ovrHmd hmd, const char* propertyName, float value) {
-	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_SetFloat";
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_SetFloat " << propertyName;
 
 	if (strcmp(propertyName, OVR_KEY_IPD) == 0) {
 		return ovrTrue;
@@ -482,39 +506,41 @@ OVR_PUBLIC_FUNCTION(ovrBool) ovrHmd_SetFloat(ovrHmd hmd, const char* propertyNam
 
 OVR_PUBLIC_FUNCTION(unsigned int) ovrHmd_GetFloatArray(ovrHmd hmd, const char* propertyName,
 	float values[], unsigned int valuesCapacity) {
-	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetFloatArray";
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetFloatArray " << propertyName;
 
 	return ovr_GetFloatArray1_3((ovrSession1_3)hmd->Handle, propertyName, values, valuesCapacity);
 }
 
 OVR_PUBLIC_FUNCTION(ovrBool) ovrHmd_SetFloatArray(ovrHmd hmd, const char* propertyName,
 	const float values[], unsigned int valuesSize) {
-	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_SetFloatArray";
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_SetFloatArray " << propertyName;
 
 	return ovr_SetFloatArray1_3((ovrSession1_3)hmd->Handle, propertyName, values, valuesSize);
 }
 
 OVR_PUBLIC_FUNCTION(const char*) ovrHmd_GetString(ovrHmd hmd, const char* propertyName,
 	const char* defaultVal) {
-	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetString";
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetString " << propertyName;
 
 	return ovr_GetString1_3((ovrSession1_3)hmd->Handle, propertyName, defaultVal);
 }
 
 OVR_PUBLIC_FUNCTION(ovrBool) ovrHmd_SetString(ovrHmd hmd, const char* propertyName,
 	const char* value) {
-	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_SetString";
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_SetString " << propertyName;
 
 	return ovr_SetString1_3((ovrSession1_3)hmd->Handle, propertyName, value);
 }
 
-OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_Lookup(const char* name, void** data) {
-	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_Lookup";
+OVR_PUBLIC_FUNCTION(ovrBool) ovr_InitializeRenderingShimVersion(int requestedMinorVersion)
+{
+	BOOST_LOG_TRIVIAL(trace) << "ovr_InitializeRenderingShimVersion";
 
-	return ovr_Lookup1_3(name, data);
+	return ovrTrue;
 }
 
 //these two functions below are just for debugging purposes
+/*
 OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_GetTextureSwapChainCurrentIndex(ovrHmd session, ovrSwapTextureSet* textureSet, int* currentIndex) {
 	ovrTextureSwapChain1_3 chain = getChain((ovrSession1_3)session, textureSet)->swapChain;
 
@@ -524,3 +550,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_GetTextureSwapChainCurrentIndex(ovrHmd ses
 OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_CommitTextureSwapChain(ovrHmd session, ovrSwapTextureSet* textureSet) {
 	return ovr_CommitTextureSwapChain1_3((ovrSession1_3)session, getChain((ovrSession1_3)session, textureSet)->swapChain);
 }
+*/
+
+
+

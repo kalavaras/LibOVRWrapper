@@ -176,6 +176,7 @@ copy $(SolutionDir)$(Configuration)\LibOVR*.* "D:\ovr_sdk_win_0.6.0.1\OculusSDK\
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="OVRShim.h" />
+    <ClInclude Include="OVR_StereoProjection.h" />
     <ClInclude Include="shimhelper.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -198,6 +199,8 @@ copy $(SolutionDir)$(Configuration)\LibOVR*.* "D:\ovr_sdk_win_0.6.0.1\OculusSDK\
     <ClCompile Include="OVRShim.cpp" />
     <ClCompile Include="OVRShim_D3D.cpp" />
     <ClCompile Include="OVRShim_GL.cpp" />
+    <ClCompile Include="OVR_CAPI_Util.cpp" />
+    <ClCompile Include="OVR_StereoProjection.cpp" />
     <ClCompile Include="shimhelper.cpp" />
     <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
