@@ -15,14 +15,29 @@
 #include "shimhelper.h"
 #include "OVRShim.h"
 
+ovrLogCallback oldLogCallback;
+void logcallback(uintptr_t userData, int level, const char* message) {
+	oldLogCallback(level, message);
+}
+
 OVR_PUBLIC_FUNCTION(ovrResult) ovr_Initialize(const ovrInitParams* params) {
 	BOOST_LOG_TRIVIAL(trace) << "ovr_Initialize";
+
+	ovrInitParams1_3 p;
+	ZeroMemory(&p, sizeof(ovrInitParams1_3));
+
+	p.Flags = params->Flags;
+	p.RequestedMinorVersion = params->RequestedMinorVersion;
+	if (params->LogCallback != nullptr) {
+		p.LogCallback = logcallback;
+		oldLogCallback = params->LogCallback;
+	}
 
 	initChains();
 
 	//TODO: handle ovrInit_ServerOptional ?
 
-	return ovr_Initialize1_3((ovrInitParams1_3*)params);
+	return ovr_Initialize1_3(&p);
 }
 
 OVR_PUBLIC_FUNCTION(void) ovr_Shutdown() {

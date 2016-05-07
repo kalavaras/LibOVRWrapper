@@ -54,10 +54,33 @@ ovrTextureFormat1_3 getOVRFormat(DXGI_FORMAT format) {
 			return OVR_FORMAT_D32_FLOAT_S8X24_UINT;
 		case DXGI_FORMAT_R8G8B8A8_TYPELESS:
 			return OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
+		case DXGI_FORMAT_B8G8R8A8_TYPELESS:
+			return OVR_FORMAT_B8G8R8A8_UNORM_SRGB;
+		case DXGI_FORMAT_B8G8R8X8_TYPELESS:
+			return OVR_FORMAT_B8G8R8X8_UNORM_SRGB;
 	}
 	
 	return OVR_FORMAT_UNKNOWN;		
 }
+
+inline DXGI_FORMAT getShaderResourceFormat(DXGI_FORMAT format)
+{
+	switch (format)
+	{
+	case DXGI_FORMAT_B8G8R8A8_TYPELESS:    return DXGI_FORMAT_B8G8R8A8_UNORM;
+	case DXGI_FORMAT_R8G8B8A8_TYPELESS:    return DXGI_FORMAT_R8G8B8A8_UNORM;
+	case DXGI_FORMAT_B8G8R8X8_TYPELESS:    return DXGI_FORMAT_B8G8R8X8_UNORM;
+	case DXGI_FORMAT_BC1_TYPELESS:         return DXGI_FORMAT_BC1_UNORM;
+	case DXGI_FORMAT_BC2_TYPELESS:         return DXGI_FORMAT_BC2_UNORM;
+	case DXGI_FORMAT_BC3_TYPELESS:         return DXGI_FORMAT_BC3_UNORM;
+	case DXGI_FORMAT_BC7_TYPELESS:         return DXGI_FORMAT_BC7_UNORM;	
+	case DXGI_FORMAT_R24G8_TYPELESS: return DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+	case DXGI_FORMAT_R32_TYPELESS: return DXGI_FORMAT_R32_FLOAT;
+	case DXGI_FORMAT_R16_TYPELESS: return DXGI_FORMAT_R16_UNORM;
+	}
+	return format;
+}
+
 
 OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_CreateSwapTextureSetD3D11(ovrHmd hmd,
 	ID3D11Device* device,
@@ -75,6 +98,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_CreateSwapTextureSetD3D11(ovrHmd hmd,
 	d.Format = getOVRFormat(desc->Format);
 
 	if (d.Format == 0) {
+		BOOST_LOG_TRIVIAL(error) << "ovrHmd_CreateSwapTextureSetD3D11 unknown format";
 		return -1;
 	}
 	
@@ -85,45 +109,20 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_CreateSwapTextureSetD3D11(ovrHmd hmd,
 	
 	d.MiscFlags = 0;
 	
-	if (!(desc->Format == DXGI_FORMAT_R8G8B8A8_UNORM_SRGB || 
-		desc->Format == DXGI_FORMAT_B8G8R8A8_UNORM_SRGB || 
-		desc->Format == DXGI_FORMAT_B8G8R8X8_UNORM_SRGB)) {
-
-		switch (d.Format) {
-		case OVR_FORMAT_R8G8B8A8_UNORM_SRGB:
-			d.MiscFlags |= ovrTextureMisc_DX_Typeless;
-			descClone.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-			break;
-		case OVR_FORMAT_B8G8R8A8_UNORM_SRGB:
-			d.MiscFlags |= ovrTextureMisc_DX_Typeless;
-			descClone.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-			break;
-		case OVR_FORMAT_B8G8R8X8_UNORM_SRGB:
-			d.MiscFlags |= ovrTextureMisc_DX_Typeless;
-			descClone.Format = DXGI_FORMAT_B8G8R8X8_UNORM;
-			break;
-		}
-		switch (desc->Format) {
-		case DXGI_FORMAT_R32_TYPELESS:
-			//descClone.Format = DXGI_FORMAT_D32_FLOAT;		
-			//descClone.MiscFlags |= D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS;
-			break;
-		case DXGI_FORMAT_R24G8_TYPELESS:
-			//descClone.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-			break;
-		case DXGI_FORMAT_R16_TYPELESS:
-			//descClone.Format = DXGI_FORMAT_D16_UNORM;
-			break;
-		case DXGI_FORMAT_R32G8X24_TYPELESS:
-			//descClone.Format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
-			break;
-		case DXGI_FORMAT_R8G8B8A8_TYPELESS:
-			//d.MiscFlags |= ovrTextureMisc_DX_Typeless;
-			//descClone.Format = DXGI_FORMAT_R8G8B8A8_TYPELESS;
-			break;
-		}
+	switch (d.Format) {
+	case OVR_FORMAT_R8G8B8A8_UNORM_SRGB:
+		d.MiscFlags |= ovrTextureMisc_DX_Typeless;
+		descClone.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		break;
+	case OVR_FORMAT_B8G8R8A8_UNORM_SRGB:
+		d.MiscFlags |= ovrTextureMisc_DX_Typeless;
+		descClone.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+		break;
+	case OVR_FORMAT_B8G8R8X8_UNORM_SRGB:
+		d.MiscFlags |= ovrTextureMisc_DX_Typeless;
+		descClone.Format = DXGI_FORMAT_B8G8R8X8_UNORM;
+		break;
 	}
-
 	
 	bool makeShaderView = false;
 	d.BindFlags = 0;
@@ -149,8 +148,10 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_CreateSwapTextureSetD3D11(ovrHmd hmd,
 
 	ovrResult result = ovr_CreateTextureSwapChainDX1_3((ovrSession1_3)hmd->Handle, (IUnknown*)device, &d, &chainwrapper->swapChain);
 
-	if (!OVR_SUCCESS(result))
+	if (!OVR_SUCCESS(result)) {
+		BOOST_LOG_TRIVIAL(error) << "ovrHmd_CreateSwapTextureSetD3D11 could not create TextureSwapChain";
 		return result;
+	}
 	
 	ovrSwapTextureSet* ts = (ovrSwapTextureSet*)malloc(sizeof(ovrSwapTextureSet));
 
@@ -162,19 +163,24 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_CreateSwapTextureSetD3D11(ovrHmd hmd,
 
 	ts->TextureCount = 2;
 	ts->CurrentIndex = 0;	
-	ts->Textures = (ovrTexture*)calloc(ts->TextureCount, sizeof(union ovrD3D11Texture));
+	ts->Textures = (ovrTexture*)calloc(ts->TextureCount, sizeof(ovrD3D11Texture));
 
 	for (int i = 0; i < chainwrapper->textureCount; ++i)
 	{		
-		ovr_GetTextureSwapChainBufferDX1_3((ovrSession1_3)hmd->Handle, chainwrapper->swapChain, i, IID_ID3D11Texture2D, (void**)&chainwrapper->textures[i]);
+		result = ovr_GetTextureSwapChainBufferDX1_3((ovrSession1_3)hmd->Handle, chainwrapper->swapChain, i, IID_ID3D11Texture2D, (void**)&chainwrapper->textures[i]);
+		if (!OVR_SUCCESS(result)) {
+			BOOST_LOG_TRIVIAL(error) << "ovrHmd_CreateSwapTextureSetD3D11 could not allocate TextureSwapChainBuffer";
+			return result;
+		}
 	}
 
 	for (int i = 0;i < 2;i++) {
-		union ovrD3D11Texture* ovrtext = (union ovrD3D11Texture*)&ts->Textures[i];
+		ovrD3D11Texture* ovrtext = (ovrD3D11Texture*)&ts->Textures[i];
 
 		HRESULT hr = device->CreateTexture2D(&descClone, nullptr, &ovrtext->D3D11.pTexture);
 
 		if (hr < 0) {
+			BOOST_LOG_TRIVIAL(error) << "ovrHmd_CreateSwapTextureSetD3D11 could create texture";
 			return ovrError_ServiceError;
 		}
 
@@ -182,23 +188,16 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_CreateSwapTextureSetD3D11(ovrHmd hmd,
 			HRESULT rs;
 
 			D3D11_SHADER_RESOURCE_VIEW_DESC depthSrv;
-			switch (desc->Format)
-			{
-			case DXGI_FORMAT_R32_TYPELESS:      depthSrv.Format = DXGI_FORMAT_R32_FLOAT;    break;
-			case DXGI_FORMAT_R24G8_TYPELESS:    depthSrv.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;    break;
-			case DXGI_FORMAT_R16_TYPELESS:      depthSrv.Format = DXGI_FORMAT_R16_UNORM;    break;
-			case DXGI_FORMAT_R32G8X24_TYPELESS: depthSrv.Format = DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS; break;
-			case DXGI_FORMAT_R8G8B8A8_TYPELESS: depthSrv.Format = DXGI_FORMAT_R8G8B8A8_UNORM; break;
-			
-			default:    depthSrv.Format = descClone.Format;
-			}
+			ZeroMemory(&depthSrv, sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC));
+			depthSrv.Format = getShaderResourceFormat(descClone.Format);
 			depthSrv.ViewDimension = desc->SampleDesc.Count > 1 ? D3D11_SRV_DIMENSION_TEXTURE2DMS : D3D11_SRV_DIMENSION_TEXTURE2D;
 			depthSrv.Texture2D.MostDetailedMip = 0;
 			depthSrv.Texture2D.MipLevels = desc->MipLevels;
-
-			rs = device->CreateShaderResourceView((ID3D11Resource*)ovrtext->D3D11.pTexture, &depthSrv, &ovrtext->D3D11.pSRView);
+			
+			rs = device->CreateShaderResourceView((ID3D11Resource*)ovrtext->D3D11.pTexture, &depthSrv, &(ovrtext->D3D11.pSRView));
 			
 			if (rs < 0) {
+				BOOST_LOG_TRIVIAL(error) << "ovrHmd_CreateSwapTextureSetD3D11 could not create ShaderResourceView";
 				return ovrError_ServiceError;
 			}
 		}
@@ -228,33 +227,42 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_CreateMirrorTextureD3D11(ovrHmd hmd,
 
 	d.MiscFlags = 0;
 
-	switch (desc->Format) {
-	case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
-		d.MiscFlags |= ovrTextureMisc_DX_Typeless;	
-		break;
-	case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
-		d.MiscFlags |= ovrTextureMisc_DX_Typeless;	
-		break;
-	case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
-		d.MiscFlags |= ovrTextureMisc_DX_Typeless;	
-		break;
-	}
+	d.MiscFlags |= ovrTextureMisc_DX_Typeless;
+
 
 	ovrMirrorTexture1_3* mirror = (ovrMirrorTexture1_3*)malloc(sizeof(ovrMirrorTexture1_3));
 
 	ovrResult result = ovr_CreateMirrorTextureDX1_3((ovrSession1_3)hmd->Handle, (IUnknown*)device, &d, mirror);
 
-	if (!OVR_SUCCESS(result))
+	if (!OVR_SUCCESS(result)) {
+		BOOST_LOG_TRIVIAL(error) << "ovrHmd_CreateMirrorTextureD3D11 could not allocate Mirrortexture";
 		return result;
+	}
 
-	union ovrD3D11Texture* ovrtext = (ovrD3D11Texture*)malloc(sizeof(union ovrD3D11Texture));
+	ovrD3D11Texture* ovrtext = (ovrD3D11Texture*)malloc(sizeof(ovrD3D11Texture));
 
 	ID3D11Texture2D* texture = 0;	
 	ovr_GetMirrorTextureBufferDX1_3((ovrSession1_3)hmd->Handle, *mirror, IID_ID3D11Texture2D, (void**)&texture);
 
 	ovrtext->D3D11.pTexture = texture;
 
-	wrapCreateShaderResourceView(device, (ID3D11Resource*)texture, &ovrtext->D3D11.pSRView);
+	if (desc->BindFlags & D3D11_BIND_SHADER_RESOURCE) {
+		HRESULT rs;
+
+		D3D11_SHADER_RESOURCE_VIEW_DESC depthSrv;
+		ZeroMemory(&depthSrv, sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC));
+		depthSrv.Format = getShaderResourceFormat(desc->Format);
+		depthSrv.ViewDimension = desc->SampleDesc.Count > 1 ? D3D11_SRV_DIMENSION_TEXTURE2DMS : D3D11_SRV_DIMENSION_TEXTURE2D;
+		depthSrv.Texture2D.MostDetailedMip = 0;
+		depthSrv.Texture2D.MipLevels = desc->MipLevels;
+
+		rs = device->CreateShaderResourceView((ID3D11Resource*)ovrtext->D3D11.pTexture, &depthSrv, &(ovrtext->D3D11.pSRView));
+
+		if (rs < 0) {
+			BOOST_LOG_TRIVIAL(error) << "ovrHmd_CreateMirrorTextureD3D11 could not create ShaderResourceView";
+			return ovrError_ServiceError;
+		}
+	}
 
 	ovrtext->D3D11.Header.API = ovrRenderAPI_D3D11;
 	ovrtext->D3D11.Header.TextureSize.w = d.Width;
