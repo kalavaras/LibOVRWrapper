@@ -31,7 +31,6 @@ Or run the install .bat file as administrator to do it for you.
 To-Do List, in decreasing priority
 ----------------------------------
 
-* 0.6 support
 * 0.5 support
 * OpenGL support
 
