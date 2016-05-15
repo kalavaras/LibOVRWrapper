@@ -216,7 +216,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_CreateMirrorTextureD3D11(ovrHmd hmd,
 	ID3D11Device* device,
 	const D3D11_TEXTURE2D_DESC* desc,
 	ovrTexture** outMirrorTexture) {
-	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_CreateMirrorTextureD3D11";
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_CreateMirrorTextureD3D11 format " << desc->Format << " samples " << desc->SampleDesc.Count << " bindflags " << desc->BindFlags << " miscflags " << desc->MiscFlags;
 
 	ovrMirrorTextureDesc1_3 d;
 	
@@ -227,15 +227,23 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_CreateMirrorTextureD3D11(ovrHmd hmd,
 
 	d.MiscFlags = 0;
 
-	d.MiscFlags |= ovrTextureMisc_DX_Typeless;
-
+	switch (d.Format) {
+	case OVR_FORMAT_R8G8B8A8_UNORM_SRGB:
+	case OVR_FORMAT_B8G8R8A8_UNORM_SRGB:
+	case OVR_FORMAT_B8G8R8X8_UNORM_SRGB:
+		d.MiscFlags |= ovrTextureMisc_DX_Typeless;		
+		break;
+	}
 
 	ovrMirrorTexture1_3* mirror = (ovrMirrorTexture1_3*)malloc(sizeof(ovrMirrorTexture1_3));
 
 	ovrResult result = ovr_CreateMirrorTextureDX1_3((ovrSession1_3)hmd->Handle, (IUnknown*)device, &d, mirror);
 
 	if (!OVR_SUCCESS(result)) {
-		BOOST_LOG_TRIVIAL(error) << "ovrHmd_CreateMirrorTextureD3D11 could not allocate Mirrortexture";
+		ovrErrorInfo1_3 info;
+		ovr_GetLastErrorInfo1_3(&info);
+
+		BOOST_LOG_TRIVIAL(error) << "ovrHmd_CreateMirrorTextureD3D11 could not allocate Mirrortexture:" << info.ErrorString;
 		return result;
 	}
 
