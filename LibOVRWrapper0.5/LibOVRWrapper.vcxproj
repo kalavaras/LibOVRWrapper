@@ -101,9 +101,9 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;LIBOVRWRAPPER_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-       <SDLCheck>true</SDLCheck>
+      <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\LibOVR0.5\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-   </ClCompile>
+    </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -111,7 +111,7 @@
     </Link>
     <PostBuildEvent>
       <Command>copy $(SolutionDir)$(Configuration)\LibOVR*.* "$(SolutionDir)OculusRoomTiny 0.5\Bin\Windows\$(Platform)\$(Configuration)\VS2013"
-copy $(SolutionDir)$(Configuration)\LibOVR*.* "D:\source\OculusSDK501\OculusSDK\Samples\OculusWorldDemo\$(Configuration)"</Command>
+rem copy $(SolutionDir)$(Configuration)\LibOVR*.* "D:\source\OculusSDK501\OculusSDK\Samples\OculusWorldDemo\$(Configuration)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
