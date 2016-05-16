@@ -386,9 +386,20 @@ OVR_PUBLIC_FUNCTION(ovrBool) ovrHmd_CreateDistortionMeshDebug(ovrHmd hmd, ovrEye
 	return ovrFalse;
 }
 
+OVR_PUBLIC_FUNCTION(int) ovrHmd_AddDistortionTimeMeasurement(ovrHmd hmd, double distortionTimeSeconds) {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_AddDistortionTimeMeasurement";
+	// not sure what to do or return here
+	return ovrFalse;
+}
+
 OVR_PUBLIC_FUNCTION(void) ovrHmd_DestroyDistortionMesh(ovrDistortionMesh* meshData)
 {
 	//todo - since we can't create a distortion mesh, there's never going to be anything to destroy here
+}
+
+OVR_PUBLIC_FUNCTION(int) ovrHmd_RegisterPostDistortionCallback(ovrHmd hmd, void *callback) {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_RegisterPostDistortionCallback";
+	return 0;
 }
 
 OVR_PUBLIC_FUNCTION(void) ovrHmd_GetRenderScaleAndOffset(ovrFovPort fov, ovrSizei textureSize, ovrRecti renderViewport,
@@ -554,6 +565,12 @@ OVR_PUBLIC_FUNCTION(ovrBool) ovr_InitializeRenderingShimVersion(int requestedMin
 	BOOST_LOG_TRIVIAL(trace) << "ovr_InitializeRenderingShimVersion";
 
 	return ovrTrue;
+}
+
+OVR_PUBLIC_FUNCTION(IUnknown *) ovr_GetDX11SwapChain()
+{
+	BOOST_LOG_TRIVIAL(trace) << "ovr_GetDX11SwapChain";
+	return NULL;
 }
 
 //these two functions below are just for debugging purposes
