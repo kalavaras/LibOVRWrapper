@@ -59,16 +59,22 @@ OVR_PUBLIC_FUNCTION(const char*) ovr_GetVersionString() {
 }
 
 OVR_PUBLIC_FUNCTION(int) ovr_TraceMessage(int level, const char* message) {
+	BOOST_LOG_TRIVIAL(trace) << "ovr_GetVersionString";
+
 	return ovr_TraceMessage1_3(level, message);
 }
 
 OVR_PUBLIC_FUNCTION(ovrBool) ovrHmd_StartPerfLog(ovrHmd hmd, const char* fileName, const char* userData1)
 {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_StartPerfLog";
+
 	return ovrFalse;
 }
 
 OVR_PUBLIC_FUNCTION(ovrBool) ovrHmd_StopPerfLog(ovrHmd hmd)
 {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_StopPerfLog";
+
 	return ovrFalse;
 }
 
@@ -81,6 +87,8 @@ OVR_PUBLIC_FUNCTION(ovrHmd) ovrHmd_CreateDebug(ovrHmdType type) {
 }
 
 OVR_PUBLIC_FUNCTION(const char*) ovrHmd_GetLastError(ovrHmd hmd) {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetLastError";
+
 	static ovrErrorInfo1_3 LastError;
 	ovr_GetLastErrorInfo1_3(&LastError);
 	return LastError.ErrorString;
@@ -172,6 +180,8 @@ OVR_PUBLIC_FUNCTION(ovrHmd) ovrHmd_Create(int index) {
 OVR_PUBLIC_FUNCTION(ovrBool) ovrHmd_AttachToWindow(ovrHmd hmd, void* window,
 	const ovrRecti* destMirrorRect, const ovrRecti* sourceRenderTargetRect)
 {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_AttachToWindow";
+
 	globalMirrorWindowHandle = (HWND)window;
 	//todo: possibly save sourceRenderTargetRect which is the area of the mirror window we should draw to (or NULL for whole mirror window)
 	return ovrTrue;
@@ -290,6 +300,8 @@ OVR_PUBLIC_FUNCTION(ovrSizei) ovrHmd_GetFovTextureSize(ovrHmd hmd, ovrEyeType ey
 OVR_PUBLIC_FUNCTION(ovrBool) ovrHmd_ConfigureRendering(ovrHmd hmd, const ovrRenderAPIConfig* apiConfig, unsigned int distortionCaps,
 	const ovrFovPort eyeFovIn[2], ovrEyeRenderDesc eyeRenderDescOut[2])
 {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_ConfigureRendering";
+
 	ovrEyeRenderDesc r[2];
 	for (int eye = 0; eye < 2; eye++) {
 		r[eye] = ovrHmd_GetRenderDesc(hmd, (ovrEyeType)eye, eyeFovIn[eye]);
@@ -311,12 +323,16 @@ unsigned int globalFrameIndex = 0;
 
 OVR_PUBLIC_FUNCTION(ovrFrameTiming) ovrHmd_BeginFrame(ovrHmd hmd, unsigned int frameIndex)
 {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_BeginFrame";
+
 	globalFrameIndex = frameIndex;
 	return ovrHmd_GetFrameTiming(hmd, frameIndex);
 }
 
 OVR_PUBLIC_FUNCTION(void) ovrHmd_EndFrame(ovrHmd hmd, const ovrPosef renderPose[2], const ovrTexture eyeTexture[2])
 {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_EndFrame";
+
 	// This is where we do the actual rendering, using the eye textures that they passed in.
 	if (!eyeTexture || eyeTexture[0].Header.API != ovrRenderAPI_D3D11)
 		return;
@@ -325,11 +341,15 @@ OVR_PUBLIC_FUNCTION(void) ovrHmd_EndFrame(ovrHmd hmd, const ovrPosef renderPose[
 
 OVR_PUBLIC_FUNCTION(ovrFrameTiming) ovrHmd_BeginFrameTiming(ovrHmd hmd, unsigned int frameIndex)
 {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_BeginFrameTiming";
+
 	return ovrHmd_BeginFrame(hmd, frameIndex);
 }
 
 OVR_PUBLIC_FUNCTION(void) ovrHmd_EndFrameTiming(ovrHmd hmd)
 {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_EndFrameTiming";
+
 	// This is where we do the actual non-rendering. They are trying to do the distortion themselves.
 }
 
@@ -337,6 +357,8 @@ OVR_PUBLIC_FUNCTION(void) ovrHmd_EndFrameTiming(ovrHmd hmd)
 
 OVR_PUBLIC_FUNCTION(ovrPosef) ovrHmd_GetHmdPosePerEye(ovrHmd hmd, ovrEyeType eye)
 {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetHmdPosePerEye";
+
 	// todo
 	{
 		static ovrPosef nullPose;
@@ -375,6 +397,8 @@ OVR_PUBLIC_FUNCTION(ovrEyeRenderDesc) ovrHmd_GetRenderDesc(ovrHmd hmd,
 OVR_PUBLIC_FUNCTION(ovrBool) ovrHmd_CreateDistortionMesh(ovrHmd hmd, ovrEyeType eyeType, ovrFovPort fov,
 	unsigned int distortionCaps, ovrDistortionMesh *meshData)
 {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_CreateDistortionMesh";
+
 	//todo
 	return ovrFalse;
 }
@@ -382,18 +406,24 @@ OVR_PUBLIC_FUNCTION(ovrBool) ovrHmd_CreateDistortionMesh(ovrHmd hmd, ovrEyeType 
 OVR_PUBLIC_FUNCTION(ovrBool) ovrHmd_CreateDistortionMeshDebug(ovrHmd hmd, ovrEyeType eyeType, ovrFovPort fov, unsigned int distortionCaps,
 	ovrDistortionMesh *meshData, float debugEyeReliefOverrideInMetres)
 {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_CreateDistortionMeshDebug";
+
 	//todo
 	return ovrFalse;
 }
 
 OVR_PUBLIC_FUNCTION(void) ovrHmd_DestroyDistortionMesh(ovrDistortionMesh* meshData)
 {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_DestroyDistortionMesh";
+
 	//todo - since we can't create a distortion mesh, there's never going to be anything to destroy here
 }
 
 OVR_PUBLIC_FUNCTION(void) ovrHmd_GetRenderScaleAndOffset(ovrFovPort fov, ovrSizei textureSize, ovrRecti renderViewport,
 	ovrVector2f uvScaleOffsetOut[2])
 {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetRenderScaleAndOffset";
+
 	// todo: set values to something sensible?
 	return;
 }
@@ -421,12 +451,16 @@ OVR_PUBLIC_FUNCTION(void) ovrHmd_ResetFrameTiming(ovrHmd hmd, unsigned int frame
 
 OVR_PUBLIC_FUNCTION(void) ovrHmd_GetEyeTimewarpMatrices(ovrHmd hmd, ovrEyeType eye, ovrPosef renderPose, ovrMatrix4f twmOut[2])
 {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetEyeTimewarpMatrices";
 	// todo
+	
 }
 
 OVR_PUBLIC_FUNCTION(void) ovrHmd_GetEyeTimewarpMatricesDebug(ovrHmd hmd, ovrEyeType eye, ovrPosef renderPose,
 	ovrQuatf playerTorsoMotion, ovrMatrix4f twmOut[2], double debugTimingOffsetInSeconds)
 {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetEyeTimewarpMatricesDebug";
+
 	// todo
 }
 
@@ -438,21 +472,28 @@ OVR_PUBLIC_FUNCTION(double) ovr_GetTimeInSeconds() {
 
 OVR_PUBLIC_FUNCTION(ovrBool) ovrHmd_ProcessLatencyTest(ovrHmd hmd, unsigned char rgbColorOut[3])
 {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_ProcessLatencyTest";
+
 	return ovrFalse;
 }
 
 OVR_PUBLIC_FUNCTION(const char*) ovrHmd_GetLatencyTestResult(ovrHmd hmd)
 {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetLatencyTestResult";
 	return "(Unable to load LibOVR)";
 }
 
 OVR_PUBLIC_FUNCTION(ovrBool) ovrHmd_GetLatencyTest2DrawColor(ovrHmd hmd, unsigned char rgbColorOut[3])
 {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetLatencyTest2DrawColor";
+
 	return ovrFalse;
 }
 
 OVR_PUBLIC_FUNCTION(void) ovrHmd_GetHSWDisplayState(ovrHmd hmd, ovrHSWDisplayState *hasWarningState)
 {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetHSWDisplayState";
+
 	if (hasWarningState) {
 		hasWarningState->Displayed = false;
 		hasWarningState->DismissibleTime = ovr_GetTimeInSeconds();
@@ -462,6 +503,8 @@ OVR_PUBLIC_FUNCTION(void) ovrHmd_GetHSWDisplayState(ovrHmd hmd, ovrHSWDisplaySta
 
 OVR_PUBLIC_FUNCTION(ovrBool) ovrHmd_DismissHSWDisplay(ovrHmd hmd)
 {
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_DismissHSWDisplay";
+
 	return ovrTrue;
 }
 
