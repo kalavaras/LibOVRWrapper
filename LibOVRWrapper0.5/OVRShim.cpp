@@ -169,6 +169,8 @@ OVR_PUBLIC_FUNCTION(ovrHmd) ovrHmd_Create(int index) {
 		d->Type = (ovrHmdType)desc.Type;
 	}
 
+	d->DisplayDeviceName = NULL;
+
 	d->EyeRenderOrder[0] = ovrEye_Left;
 	d->EyeRenderOrder[1] = ovrEye_Right;
 
