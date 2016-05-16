@@ -29,4 +29,10 @@ EXTERNC ovrResult makeD3D11Texture(IUnknown* device,
 EXTERNC void GetContext(ID3D11Device* device, ID3D11DeviceContext** context);
 EXTERNC void CopyTexture(ID3D11DeviceContext* device, ID3D11Texture2D* dest, ovrTexture* src);
 
+ovrBool ConfigureD3D11(ovrSession1_3 session, const ovrRenderAPIConfig* apiConfig, unsigned int distortionCaps,
+	const ovrFovPort eyeFovIn[2], ovrEyeRenderDesc eyeRenderDescOut[2]);
+
+void PresentD3D11(ovrSession1_3 session, const ovrPosef renderPose[2], const ovrTexture eyeTexture[2]);
+
+
 #undef EXTERNC

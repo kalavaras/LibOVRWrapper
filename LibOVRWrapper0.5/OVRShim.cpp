@@ -102,7 +102,6 @@ ovrGraphicsLuid1_3 globalGraphicsLuid;
 HWND globalMirrorWindowHandle;
 bool globalDisableMirror = false;
 ovrRenderAPIConfig globalAPIConfig;
-unsigned int globalDistortionCaps;
 ovrFovPort globalEyeFOV[2];
 ovrEyeRenderDesc globalEyeRenderDesc[2];
 
@@ -291,9 +290,19 @@ OVR_PUBLIC_FUNCTION(ovrSizei) ovrHmd_GetFovTextureSize(ovrHmd hmd, ovrEyeType ey
 OVR_PUBLIC_FUNCTION(ovrBool) ovrHmd_ConfigureRendering(ovrHmd hmd, const ovrRenderAPIConfig* apiConfig, unsigned int distortionCaps,
 	const ovrFovPort eyeFovIn[2], ovrEyeRenderDesc eyeRenderDescOut[2])
 {
+	ovrEyeRenderDesc r[2];
+	for (int eye = 0; eye < 2; eye++) {
+		r[eye] = ovrHmd_GetRenderDesc(hmd, (ovrEyeType)eye, eyeFovIn[eye]);
+		if (eyeRenderDescOut)
+			eyeRenderDescOut[eye] = r[eye];
+	}
 	if (apiConfig) {
 		globalAPIConfig = *apiConfig;
-
+		if (apiConfig->Header.API == ovrRenderAPI_D3D11) {
+			ConfigureD3D11((ovrSession1_3)(hmd->Handle), apiConfig, distortionCaps, eyeFovIn, r);
+		} else {
+			return ovrFalse;
+		}
 	}
 	return ovrTrue;
 }
@@ -309,16 +318,9 @@ OVR_PUBLIC_FUNCTION(ovrFrameTiming) ovrHmd_BeginFrame(ovrHmd hmd, unsigned int f
 OVR_PUBLIC_FUNCTION(void) ovrHmd_EndFrame(ovrHmd hmd, const ovrPosef renderPose[2], const ovrTexture eyeTexture[2])
 {
 	// This is where we do the actual rendering, using the eye textures that they passed in.
-
-	unsigned int trueLayerCount = 0;
-	ovrLayerHeader1_3* newlayers[16];
-
-	ovrResult r = ovr_SubmitFrame1_3((ovrSession1_3)hmd->Handle, globalFrameIndex, NULL, newlayers, trueLayerCount);
-
-	for (unsigned int i = 0; i < trueLayerCount; i++) {
-		if (newlayers[i] != nullptr)
-			free(newlayers[i]);
-	}
+	if (!eyeTexture || eyeTexture[0].Header.API != ovrRenderAPI_D3D11)
+		return;
+	PresentD3D11((ovrSession1_3)(hmd->Handle), renderPose, eyeTexture);
 }
 
 OVR_PUBLIC_FUNCTION(ovrFrameTiming) ovrHmd_BeginFrameTiming(ovrHmd hmd, unsigned int frameIndex)

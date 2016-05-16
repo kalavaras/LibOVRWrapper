@@ -88,7 +88,9 @@ struct OculusTexture
 {
 	ovrSession1_3            Session;
 	ovrTextureSwapChain1_3   TextureChain;
+	ovrSizei                  size;
 	std::vector<ID3D11RenderTargetView*> TexRtv;
+	std::vector<ID3D11Texture2D*> Tex2D;
 
 	OculusTexture() :
 		Session(nullptr),
@@ -99,6 +101,8 @@ struct OculusTexture
 	bool Init(ovrSession1_3 session, ID3D11Device *device, int sizeW, int sizeH)
 	{
 		Session = session;
+		size.w = sizeW;
+		size.h = sizeH;
 
 		ovrTextureSwapChainDesc1_3 desc = {};
 		desc.Type = ovrTexture_2D;
@@ -156,9 +160,96 @@ struct OculusTexture
 		return TexRtv[index];
 	}
 
+	ID3D11Texture2D* GetTex()
+	{
+		int index = 0;
+		ID3D11Texture2D* tex = nullptr;
+		ovr_GetTextureSwapChainCurrentIndex1_3(Session, TextureChain, &index);
+		ovr_GetTextureSwapChainBufferDX1_3(Session, TextureChain, index, IID_PPV_ARGS(&tex));
+		return tex;
+	}
+
 	// Commit changes
 	void Commit()
 	{
 		ovr_CommitTextureSwapChain1_3(Session, TextureChain);
 	}
 };
+
+ovrD3D11Config cfg;
+ovrEyeRenderDesc EyeRenderDesc[2];
+unsigned int globalDistortionCaps;
+ovrFovPort eyeRenderFov[2];
+OculusTexture  * pEyeRenderTexture[2] = { nullptr, nullptr };
+
+// This gives us the D3D device, the mirror window's backbuffer render target, ovrDistortionCap_FlipInput, ovrDistortionCap_SRGB, ovrDistortionCap_HqDistortion,
+// and the desired FOV. But it doesn't officially give us the render texture size that we need for creating the textures.
+ovrBool ConfigureD3D11(ovrSession1_3 session, const ovrRenderAPIConfig* apiConfig, unsigned int distortionCaps,
+	const ovrFovPort eyeFovIn[2], ovrEyeRenderDesc eyeRenderDescOut[2])
+{
+	cfg = *(ovrD3D11Config *)apiConfig;
+	globalDistortionCaps = distortionCaps;
+	for (int eye = 0; eye < 2; eye++) {
+		eyeRenderFov[eye] = eyeFovIn[eye];
+		EyeRenderDesc[eye] = eyeRenderDescOut[eye];
+	}
+	return ovrTrue;
+}
+
+extern unsigned int globalFrameIndex;
+extern double globalTrackingStateTime;
+
+void RecreateEyeRenderTexture(ovrSession1_3 session, int eye, ovrSizei size) {
+	bool dirty = false;
+	if (!pEyeRenderTexture[eye]) {
+		dirty = true;
+	} else if (pEyeRenderTexture[eye]->size.w != size.w || pEyeRenderTexture[eye]->size.h != size.h) {
+		delete pEyeRenderTexture[eye];
+		pEyeRenderTexture[eye] = NULL;
+		dirty = true;
+	}
+	if (dirty) {
+		pEyeRenderTexture[eye] = new OculusTexture();
+		if (!pEyeRenderTexture[eye]->Init(session, cfg.D3D11.pDevice, size.w, size.h))
+		{
+			// failed
+		}
+	}
+}
+
+void PresentD3D11(ovrSession1_3 session, const ovrPosef renderPose[2], const ovrTexture eyeTexture[2])
+{
+	ovrD3D11Texture* tex;
+	tex = (ovrD3D11Texture*)eyeTexture;
+	for (int eye = 0; eye < 2; ++eye)
+	{
+		RecreateEyeRenderTexture(session, eye, tex[eye].D3D11.Header.TextureSize);
+		//CopyEyeRenderTexture
+		ID3D11Texture2D *dest = pEyeRenderTexture[eye]->GetTex();
+		cfg.D3D11.pDeviceContext->CopyResource(dest, tex[eye].D3D11.pTexture);
+		dest->Release();
+		pEyeRenderTexture[eye]->Commit();
+	}
+
+	// Initialize our single full screen Fov layer.
+	ovrLayerHeader1_3* layers[1];
+	ovrLayerEyeFov1_3 ld = {};
+	ld.Header.Type = ovrLayerType1_3_EyeFov;
+	ld.Header.Flags = 0;
+
+	for (int eye = 0; eye < 2; ++eye)
+	{
+		ld.ColorTexture[eye] = pEyeRenderTexture[eye]->TextureChain;
+		ld.Viewport[eye] = tex[eye].D3D11.Header.RenderViewport;
+		ld.Fov[eye].DownTan = eyeRenderFov[eye].DownTan;
+		ld.Fov[eye].LeftTan = eyeRenderFov[eye].LeftTan;
+		ld.Fov[eye].RightTan = eyeRenderFov[eye].RightTan;
+		ld.Fov[eye].UpTan = eyeRenderFov[eye].UpTan;
+		ld.RenderPose[eye].Orientation = renderPose[eye].Orientation;
+		ld.RenderPose[eye].Position = renderPose[eye].Position;
+		ld.SensorSampleTime = globalTrackingStateTime;
+	}
+
+	layers[0] = &ld.Header;
+	ovr_SubmitFrame1_3(session, globalFrameIndex, NULL, layers, 1);
+}
