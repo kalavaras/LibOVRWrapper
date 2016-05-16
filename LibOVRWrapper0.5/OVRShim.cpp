@@ -55,7 +55,7 @@ OVR_PUBLIC_FUNCTION(void) ovr_Shutdown() {
 OVR_PUBLIC_FUNCTION(const char*) ovr_GetVersionString() {
 	BOOST_LOG_TRIVIAL(trace) << "ovr_GetVersionString";
 
-	return "OculusSDK0.5";
+	return "0.5.0";
 }
 
 OVR_PUBLIC_FUNCTION(int) ovr_TraceMessage(int level, const char* message) {
