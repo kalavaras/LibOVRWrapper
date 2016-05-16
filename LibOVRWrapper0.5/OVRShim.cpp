@@ -59,7 +59,7 @@ OVR_PUBLIC_FUNCTION(const char*) ovr_GetVersionString() {
 }
 
 OVR_PUBLIC_FUNCTION(int) ovr_TraceMessage(int level, const char* message) {
-	BOOST_LOG_TRIVIAL(trace) << "ovr_GetVersionString";
+	BOOST_LOG_TRIVIAL(trace) << "ovr_TraceMessage";
 
 	return ovr_TraceMessage1_3(level, message);
 }
