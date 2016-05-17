@@ -53,7 +53,7 @@ OVR_PUBLIC_FUNCTION(void) ovr_GetLastErrorInfo(ovrErrorInfo* errorInfo) {
 OVR_PUBLIC_FUNCTION(const char*) ovr_GetVersionString() {
 	BOOST_LOG_TRIVIAL(trace) << "ovr_GetVersionString";
 
-	return "OculusSDK0.6";
+	return "0.6.0.1";
 }
 
 OVR_PUBLIC_FUNCTION(int) ovr_TraceMessage(int level, const char* message) {
@@ -65,8 +65,7 @@ float globalRefreshRate = 90.0f;
 OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_CreateDebug(ovrHmdType type, ovrHmd* pHmd) {
 	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_CreateDebug";
 
-	//todo: needed?
-	return -1;
+	return ovrHmd_Create(0, pHmd);
 }
 
 OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_Detect() {
