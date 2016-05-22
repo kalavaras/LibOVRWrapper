@@ -24,6 +24,7 @@ void logcallback(uintptr_t userData, int level, const char* message) {
 	oldLogCallback(level, message);
 }
 
+double initTime;
 OVR_PUBLIC_FUNCTION(ovrBool) ovr_Initialize(const ovrInitParams* params) {
 	BOOST_LOG_TRIVIAL(trace) << "ovr_Initialize";
 
@@ -43,11 +44,17 @@ OVR_PUBLIC_FUNCTION(ovrBool) ovr_Initialize(const ovrInitParams* params) {
 	initChains();
 
 	//TODO: handle ovrInit_ServerOptional ?
-	return OVR_SUCCESS(ovr_Initialize1_3(pp));
+	bool r = OVR_SUCCESS(ovr_Initialize1_3(pp));
+
+	initTime = ovr_GetTimeInSeconds1_3();
+
+	return r;
 }
 
 OVR_PUBLIC_FUNCTION(void) ovr_Shutdown() {
 	BOOST_LOG_TRIVIAL(trace) << "ovr_Shutdown";
+
+	ShutdownD3D11();
 
 	ovr_Shutdown1_3();
 }
@@ -134,7 +141,8 @@ OVR_PUBLIC_FUNCTION(ovrHmd) ovrHmd_Create(int index) {
 	ovrHmdDesc* d = (ovrHmdDesc*)malloc(sizeof(ovrHmdDesc));
 
 	d->Handle = (ovrHmdStruct *)pSession;
-	d->HmdCaps = ovrHmdCap_LowPersistence | ovrHmdCap_DynamicPrediction;
+	d->HmdCaps = ovrHmdCap_Present | ovrHmdCap_Available | ovrHmdCap_Captured | ovrHmdCap_LowPersistence | ovrHmdCap_DynamicPrediction;
+	d->DistortionCaps = ovrDistortionCap_TimeWarp | ovrDistortionCap_Vignette | ovrDistortionCap_Overdrive;
 	d->TrackingCaps = desc.AvailableTrackingCaps;
 
 	ovrTrackerDesc1_3 tracker = ovr_GetTrackerDesc1_3(pSession, 0);
@@ -325,7 +333,7 @@ unsigned int globalFrameIndex = 0;
 
 OVR_PUBLIC_FUNCTION(ovrFrameTiming) ovrHmd_BeginFrame(ovrHmd hmd, unsigned int frameIndex)
 {
-	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_BeginFrame";
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_BeginFrame index " << frameIndex;
 
 	globalFrameIndex = frameIndex;
 	return ovrHmd_GetFrameTiming(hmd, frameIndex);
@@ -441,8 +449,12 @@ OVR_PUBLIC_FUNCTION(void) ovrHmd_GetRenderScaleAndOffset(ovrFovPort fov, ovrSize
 	return;
 }
 
+
+/// It is generally expected that the following holds:
+/// ThisFrameSeconds < TimewarpPointSeconds < NextFrameSeconds < 
+/// EyeScanoutSeconds[EyeOrder[0]] <= ScanoutMidpointSeconds <= EyeScanoutSeconds[EyeOrder[1]].
 OVR_PUBLIC_FUNCTION(ovrFrameTiming) ovrHmd_GetFrameTiming(ovrHmd hmd, unsigned int frameIndex) {
-	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetFrameTiming";
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetFrameTiming index " << frameIndex;
 
 	ovrFrameTiming timing;
 	timing.ScanoutMidpointSeconds = ovr_GetPredictedDisplayTime1_3((ovrSession1_3)hmd->Handle, frameIndex);
@@ -452,7 +464,7 @@ OVR_PUBLIC_FUNCTION(ovrFrameTiming) ovrHmd_GetFrameTiming(ovrHmd hmd, unsigned i
 	timing.EyeScanoutSeconds[0] = timing.ThisFrameSeconds;
 	timing.EyeScanoutSeconds[1] = timing.ThisFrameSeconds;
 	timing.TimewarpPointSeconds = timing.ThisFrameSeconds;
-
+	
 	return timing;
 }
 
@@ -503,14 +515,34 @@ OVR_PUBLIC_FUNCTION(ovrBool) ovrHmd_GetLatencyTest2DrawColor(ovrHmd hmd, unsigne
 	return ovrFalse;
 }
 
+/* hidden functions */
+OVR_PUBLIC_FUNCTION(ovrBool) ovrHmd_GetLatencyTestDrawColor(ovrHmd hmd, unsigned char rgbColorOut[3])
+{
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetLatencyTestDrawColor";
+
+	//todo: right parameters
+
+	return ovrFalse;
+}
+
+/* hidden functions */
+OVR_PUBLIC_FUNCTION(ovrBool) ovrHmd_GetMeasuredLatencyTest2(ovrHmd hmd)
+{
+	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetMeasuredLatencyTest2";
+
+	//todo: right parameters
+
+	return ovrFalse;
+}
+
 OVR_PUBLIC_FUNCTION(void) ovrHmd_GetHSWDisplayState(ovrHmd hmd, ovrHSWDisplayState *hasWarningState)
 {
 	BOOST_LOG_TRIVIAL(trace) << "ovrHmd_GetHSWDisplayState";
 
 	if (hasWarningState) {
 		hasWarningState->Displayed = false;
-		hasWarningState->DismissibleTime = ovr_GetTimeInSeconds();
-		hasWarningState->StartTime = ovr_GetTimeInSeconds() - 5;
+		hasWarningState->DismissibleTime = initTime;
+		hasWarningState->StartTime = initTime;		
 	}
 }
 

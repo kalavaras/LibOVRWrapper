@@ -33,6 +33,6 @@ ovrBool ConfigureD3D11(ovrSession1_3 session, const ovrRenderAPIConfig* apiConfi
 	const ovrFovPort eyeFovIn[2], ovrEyeRenderDesc eyeRenderDescOut[2]);
 
 void PresentD3D11(ovrSession1_3 session, const ovrPosef renderPose[2], const ovrTexture eyeTexture[2]);
-
+void ShutdownD3D11();
 
 #undef EXTERNC

@@ -88,8 +88,7 @@ struct OculusTexture
 {
 	ovrSession1_3            Session;
 	ovrTextureSwapChain1_3   TextureChain;
-	ovrSizei                  size;
-	std::vector<ID3D11RenderTargetView*> TexRtv;
+	ovrSizei                  size;	
 	std::vector<ID3D11Texture2D*> Tex2D;
 
 	OculusTexture() :
@@ -98,23 +97,33 @@ struct OculusTexture
 	{
 	}
 
-	bool Init(ovrSession1_3 session, ID3D11Device *device, int sizeW, int sizeH)
+	bool Init(ovrSession1_3 session, ID3D11Device *device, ovrD3D11Texture texture)
 	{
 		Session = session;
-		size.w = sizeW;
-		size.h = sizeH;
+		size.w = texture.D3D11.Header.TextureSize.w;
+		size.h = texture.D3D11.Header.TextureSize.h;
+
+		D3D11_TEXTURE2D_DESC orgdesc;
+		texture.D3D11.pTexture->GetDesc(&orgdesc);
 
 		ovrTextureSwapChainDesc1_3 desc = {};
 		desc.Type = ovrTexture_2D;
 		desc.ArraySize = 1;
-		desc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
-		desc.Width = sizeW;
-		desc.Height = sizeH;
+		desc.Format = getOVRFormat(orgdesc.Format);
+		desc.Width = texture.D3D11.Header.TextureSize.w;
+		desc.Height = texture.D3D11.Header.TextureSize.h;
 		desc.MipLevels = 1;
 		desc.SampleCount = 1;
-		desc.MiscFlags = ovrTextureMisc_DX_Typeless;
-		desc.BindFlags = ovrTextureBind_DX_RenderTarget;
+		desc.MiscFlags = 0;		
 		desc.StaticImage = ovrFalse;
+
+		switch (desc.Format) {
+		case OVR_FORMAT_R8G8B8A8_UNORM_SRGB:		
+		case OVR_FORMAT_B8G8R8A8_UNORM_SRGB:			
+		case OVR_FORMAT_B8G8R8X8_UNORM_SRGB:
+			desc.MiscFlags |= ovrTextureMisc_DX_Typeless;
+			break;
+		}
 
 		ovrResult result = ovr_CreateTextureSwapChainDX1_3(session, device, &desc, &TextureChain);
 		if (!OVR_SUCCESS(result))
@@ -125,27 +134,20 @@ struct OculusTexture
 		for (int i = 0; i < textureCount; ++i)
 		{
 			ID3D11Texture2D* tex = nullptr;
-			ovr_GetTextureSwapChainBufferDX1_3(Session, TextureChain, i, IID_PPV_ARGS(&tex));
-			D3D11_RENDER_TARGET_VIEW_DESC rtvd = {};
-			rtvd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-			rtvd.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-			ID3D11RenderTargetView* rtv;
-			device->CreateRenderTargetView(tex, &rtvd, &rtv);
-			TexRtv.push_back(rtv);
-			tex->Release();
+			ovrResult r = ovr_GetTextureSwapChainBufferDX1_3(Session, TextureChain, i, IID_PPV_ARGS(&tex));
+			if (r < 0) {
+				BOOST_LOG_TRIVIAL(error) << "Init ovr_GetTextureSwapChainBufferDX1_3 error " << r;
+			}
+			Tex2D.push_back(tex);
 		}
 
 		return true;
 	}
 
 	~OculusTexture()
-	{
-		for (int i = 0; i < (int)TexRtv.size(); ++i)
-		{
-			if (TexRtv[i]) {
-				TexRtv[i]->Release();
-				TexRtv[i] = NULL;
-			}
+	{		
+		for (int i = 0;i < Tex2D.size();i++) {
+			Tex2D[i]->Release();
 		}
 		if (TextureChain)
 		{
@@ -153,26 +155,23 @@ struct OculusTexture
 		}
 	}
 
-	ID3D11RenderTargetView* GetRTV()
-	{
-		int index = 0;
-		ovr_GetTextureSwapChainCurrentIndex1_3(Session, TextureChain, &index);
-		return TexRtv[index];
-	}
-
 	ID3D11Texture2D* GetTex()
 	{
-		int index = 0;
-		ID3D11Texture2D* tex = nullptr;
-		ovr_GetTextureSwapChainCurrentIndex1_3(Session, TextureChain, &index);
-		ovr_GetTextureSwapChainBufferDX1_3(Session, TextureChain, index, IID_PPV_ARGS(&tex));
-		return tex;
+		int index = 0;		
+		ovrResult r = ovr_GetTextureSwapChainCurrentIndex1_3(Session, TextureChain, &index);
+		if (r < 0) {
+			BOOST_LOG_TRIVIAL(error) << "GetTex ovr_GetTextureSwapChainCurrentIndex1_3 error " << r;
+		}
+		return this->Tex2D[index];
 	}
 
 	// Commit changes
 	void Commit()
 	{
-		ovr_CommitTextureSwapChain1_3(Session, TextureChain);
+		ovrResult r = ovr_CommitTextureSwapChain1_3(Session, TextureChain);
+		if (r < 0) {
+			BOOST_LOG_TRIVIAL(error) << "Commit ovr_CommitTextureSwapChain1_3 error " << r;
+		}
 	}
 };
 
@@ -199,20 +198,21 @@ ovrBool ConfigureD3D11(ovrSession1_3 session, const ovrRenderAPIConfig* apiConfi
 extern unsigned int globalFrameIndex;
 extern double globalTrackingStateTime;
 
-void RecreateEyeRenderTexture(ovrSession1_3 session, int eye, ovrSizei size) {
+void RecreateEyeRenderTexture(ovrSession1_3 session, int eye, ovrD3D11Texture texture) {
 	bool dirty = false;
 	if (!pEyeRenderTexture[eye]) {
 		dirty = true;
-	} else if (pEyeRenderTexture[eye]->size.w != size.w || pEyeRenderTexture[eye]->size.h != size.h) {
+	} else if (pEyeRenderTexture[eye]->size.w != texture.D3D11.Header.TextureSize.w || pEyeRenderTexture[eye]->size.h != texture.D3D11.Header.TextureSize.h) {
 		delete pEyeRenderTexture[eye];
 		pEyeRenderTexture[eye] = NULL;
 		dirty = true;
 	}
 	if (dirty) {
 		pEyeRenderTexture[eye] = new OculusTexture();
-		if (!pEyeRenderTexture[eye]->Init(session, cfg.D3D11.pDevice, size.w, size.h))
+		if (!pEyeRenderTexture[eye]->Init(session, cfg.D3D11.pDevice, texture))
 		{
 			// failed
+			BOOST_LOG_TRIVIAL(error) << "RecreateEyeRenderTexture Init error ";
 		}
 	}
 }
@@ -223,11 +223,10 @@ void PresentD3D11(ovrSession1_3 session, const ovrPosef renderPose[2], const ovr
 	tex = (ovrD3D11Texture*)eyeTexture;
 	for (int eye = 0; eye < 2; ++eye)
 	{
-		RecreateEyeRenderTexture(session, eye, tex[eye].D3D11.Header.TextureSize);
+		RecreateEyeRenderTexture(session, eye, tex[eye]);
 		//CopyEyeRenderTexture
 		ID3D11Texture2D *dest = pEyeRenderTexture[eye]->GetTex();
-		cfg.D3D11.pDeviceContext->CopyResource(dest, tex[eye].D3D11.pTexture);
-		dest->Release();
+		cfg.D3D11.pDeviceContext->CopyResource(dest, tex[eye].D3D11.pTexture);		
 		pEyeRenderTexture[eye]->Commit();
 	}
 
@@ -252,4 +251,14 @@ void PresentD3D11(ovrSession1_3 session, const ovrPosef renderPose[2], const ovr
 
 	layers[0] = &ld.Header;
 	ovr_SubmitFrame1_3(session, globalFrameIndex, NULL, layers, 1);
+}
+
+void ShutdownD3D11() {
+
+	for (int i = 0;i < 2;i++) {
+		if (pEyeRenderTexture[i] != nullptr) {
+			delete pEyeRenderTexture[i];
+			pEyeRenderTexture[i] = nullptr;
+		}
+	}
 }
