@@ -139,10 +139,11 @@ OVR_PUBLIC_FUNCTION(ovrHmd) ovrHmd_Create(int index) {
 	ovrHmdDesc1_3 desc = ovr_GetHmdDesc1_3(pSession);
 
 	ovrHmdDesc* d = (ovrHmdDesc*)malloc(sizeof(ovrHmdDesc));
+	ZeroMemory(d, sizeof(ovrHmdDesc));
 
 	d->Handle = (ovrHmdStruct *)pSession;
 	d->HmdCaps = ovrHmdCap_Present | ovrHmdCap_Available | ovrHmdCap_Captured | ovrHmdCap_LowPersistence | ovrHmdCap_DynamicPrediction;
-	d->DistortionCaps = ovrDistortionCap_TimeWarp | ovrDistortionCap_Vignette | ovrDistortionCap_Overdrive;
+	d->DistortionCaps = ovrDistortionCap_Vignette | ovrDistortionCap_Overdrive; // ovrDistortionCap_TimeWarp | 
 	d->TrackingCaps = desc.AvailableTrackingCaps;
 
 	ovrTrackerDesc1_3 tracker = ovr_GetTrackerDesc1_3(pSession, 0);
@@ -177,10 +178,14 @@ OVR_PUBLIC_FUNCTION(ovrHmd) ovrHmd_Create(int index) {
 		d->Type = (ovrHmdType)desc.Type;
 	}
 
-	d->DisplayDeviceName = NULL;
+	d->DisplayDeviceName = "\\\\.\\DISPLAY0";
 
 	d->EyeRenderOrder[0] = ovrEye_Left;
 	d->EyeRenderOrder[1] = ovrEye_Right;
+
+	d->DisplayId = 0;
+	d->WindowsPos.x = 0;
+	d->WindowsPos.y = 0;
 
 	ovr_SetTrackingOriginType1_3(pSession, ovrTrackingOrigin1_3_EyeLevel);
 
@@ -259,6 +264,8 @@ OVR_PUBLIC_FUNCTION(ovrTrackingState) ovrHmd_GetTrackingState(ovrHmd hmd, double
 	ovrTrackerPose1_3 tpose = ovr_GetTrackerPose1_3((ovrSession1_3)hmd->Handle, 0);	
 	
 	ovrTrackingState r;	
+	ZeroMemory(&r, sizeof(ovrTrackingState));
+
 	copyPose(&(r.CameraPose), &(tpose.Pose));
 	r.CameraPose.Orientation = tpose.Pose.Orientation;
 	r.CameraPose.Position = tpose.Pose.Position;
@@ -323,6 +330,7 @@ OVR_PUBLIC_FUNCTION(ovrBool) ovrHmd_ConfigureRendering(ovrHmd hmd, const ovrRend
 		if (apiConfig->Header.API == ovrRenderAPI_D3D11) {
 			ConfigureD3D11((ovrSession1_3)(hmd->Handle), apiConfig, distortionCaps, eyeFovIn, r);
 		} else {
+			BOOST_LOG_TRIVIAL(trace) << "ovrHmd_ConfigureRendering error. unsupported rendering API " << apiConfig->Header.API;
 			return ovrFalse;
 		}
 	}
@@ -458,12 +466,12 @@ OVR_PUBLIC_FUNCTION(ovrFrameTiming) ovrHmd_GetFrameTiming(ovrHmd hmd, unsigned i
 
 	ovrFrameTiming timing;
 	timing.ScanoutMidpointSeconds = ovr_GetPredictedDisplayTime1_3((ovrSession1_3)hmd->Handle, frameIndex);
-	timing.ThisFrameSeconds = timing.ScanoutMidpointSeconds;
+	timing.ThisFrameSeconds = ovr_GetTimeInSeconds1_3();
 	timing.DeltaSeconds = 1.0f / globalRefreshRate; //todo: calculate this somehow?
 	timing.NextFrameSeconds = timing.ThisFrameSeconds + timing.DeltaSeconds;
-	timing.EyeScanoutSeconds[0] = timing.ThisFrameSeconds;
-	timing.EyeScanoutSeconds[1] = timing.ThisFrameSeconds;
-	timing.TimewarpPointSeconds = timing.ThisFrameSeconds;
+	timing.EyeScanoutSeconds[0] = timing.ScanoutMidpointSeconds;
+	timing.EyeScanoutSeconds[1] = timing.ScanoutMidpointSeconds;
+	timing.TimewarpPointSeconds = timing.ScanoutMidpointSeconds;
 	
 	return timing;
 }

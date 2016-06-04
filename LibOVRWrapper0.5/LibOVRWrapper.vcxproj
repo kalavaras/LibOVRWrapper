@@ -110,8 +110,7 @@
       <AdditionalDependencies>d3d11.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(SolutionDir)$(Configuration)\LibOVR*.* "$(SolutionDir)OculusRoomTiny 0.5\Bin\Windows\$(Platform)\$(Configuration)\VS2013"
-rem copy $(SolutionDir)$(Configuration)\LibOVR*.* "D:\source\OculusSDK501\OculusSDK\Samples\OculusWorldDemo\$(Configuration)"</Command>
+      <Command>copy /y $(SolutionDir)$(Configuration)\LibOVR*.* D:\vr\NeosTheUniverseWin</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -130,7 +129,7 @@ rem copy $(SolutionDir)$(Configuration)\LibOVR*.* "D:\source\OculusSDK501\Oculus
       <AdditionalDependencies>d3d11.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(SolutionDir)$(Configuration)\LibOVR*.* "$(SolutionDir)OculusRoomTiny 0.5\Bin\Windows\$(Platform)\$(Configuration)\VS2013"</Command>
+      <Command>copy /y $(SolutionDir)$(Configuration)\LibOVR*.* D:\vr\NeosTheUniverseWin</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -153,7 +152,7 @@ rem copy $(SolutionDir)$(Configuration)\LibOVR*.* "D:\source\OculusSDK501\Oculus
       <AdditionalDependencies>d3d11.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(SolutionDir)$(Configuration)\LibOVR*.* "$(SolutionDir)OculusRoomTiny 0.5\Bin\Windows\$(Platform)\$(Configuration)\VS2013"</Command>
+      <Command>copy /y $(SolutionDir)$(Configuration)\LibOVR*.* D:\vr\NeosTheUniverseWin</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -176,7 +175,7 @@ rem copy $(SolutionDir)$(Configuration)\LibOVR*.* "D:\source\OculusSDK501\Oculus
       <AdditionalDependencies>d3d11.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(SolutionDir)$(Configuration)\LibOVR*.* "$(SolutionDir)OculusRoomTiny (DX11)0.6\Bin\Windows\$(Platform)\$(Configuration)\VS2013"</Command>
+      <Command>copy /y $(SolutionDir)$(Configuration)\LibOVR*.* D:\vr\NeosTheUniverseWin</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
