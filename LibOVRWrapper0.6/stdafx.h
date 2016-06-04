@@ -43,6 +43,7 @@ namespace expr = boost::log::expressions;
 namespace attrs = boost::log::attributes;
 namespace keywords = boost::log::keywords;
 
+#include "WrapperSettings.h"
 
 #include "../LibOVR/Include/OVR_CAPI.h"
 #include "../LibOVR/Include/OVR_Version.h"

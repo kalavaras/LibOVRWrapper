@@ -1,6 +1,8 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include "stdafx.h"
 
+#include "shimhelper.h"
+
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 
@@ -12,9 +14,10 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
-		{
-			int loglevel = 0;
+		{			
 			const char inifile[] = "LibOVRWrapper.ini";
+
+			auto settings = new WrapperSettings();
 
 			boost::shared_ptr<sinks::synchronous_sink<sinks::text_file_backend>> sink = nullptr;
 
@@ -23,14 +26,15 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 				try {
 					boost::property_tree::ini_parser::read_ini(inifile, pt);
 
-					loglevel = pt.get<int>("logging.loglevel", 0);
-					if (loglevel > 0) {
+					settings->loglevel = pt.get<int>("logging.loglevel", 0);
+					if (settings->loglevel > 0) {
 						sink = logging::add_file_log(
 							keywords::file_name = "LibOVRWrapper.log", 
 							keywords::auto_flush = true
 						);
 						
 					}
+					settings->srgbCorrectionEnabled = pt.get<bool>("graphics.srgbCorrectionEnabled", true);
 
 				}
 				catch (boost::property_tree::ini_parser_error) {
@@ -38,12 +42,12 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 				}
 			}			
 
-			if (loglevel < 0)
-				loglevel = 0;
-			else if (loglevel > 3)
-				loglevel = 3;
+			if (settings->loglevel < 0)
+				settings->loglevel = 0;
+			else if (settings->loglevel > 3)
+				settings->loglevel = 3;
 			
-			switch (loglevel) {
+			switch (settings->loglevel) {
 			case 0:
 				logging::core::get()->set_logging_enabled(false);
 				break;
@@ -68,6 +72,8 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 			}
 
 			BOOST_LOG_TRIVIAL(info) << "Initialized logging";			
+
+			setWrapperSettings(settings);
 		}		
 		break;
 	case DLL_THREAD_ATTACH:

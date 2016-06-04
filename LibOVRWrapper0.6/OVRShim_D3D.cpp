@@ -110,19 +110,26 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovrHmd_CreateSwapTextureSetD3D11(ovrHmd hmd,
 	d.MiscFlags = 0;
 	
 	switch (d.Format) {
-	case OVR_FORMAT_R8G8B8A8_UNORM_SRGB:
-		d.MiscFlags |= ovrTextureMisc_DX_Typeless;
-		descClone.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		break;
-	case OVR_FORMAT_B8G8R8A8_UNORM_SRGB:
-		d.MiscFlags |= ovrTextureMisc_DX_Typeless;
-		descClone.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-		break;
+	case OVR_FORMAT_R8G8B8A8_UNORM_SRGB:	
+	case OVR_FORMAT_B8G8R8A8_UNORM_SRGB:	
 	case OVR_FORMAT_B8G8R8X8_UNORM_SRGB:
-		d.MiscFlags |= ovrTextureMisc_DX_Typeless;
-		descClone.Format = DXGI_FORMAT_B8G8R8X8_UNORM;
+		d.MiscFlags |= ovrTextureMisc_DX_Typeless;		
 		break;
 	}
+
+	if (getWrapperSettings()->srgbCorrectionEnabled) {
+		switch (d.Format) {
+		case OVR_FORMAT_R8G8B8A8_UNORM_SRGB:
+			descClone.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+			break;
+		case OVR_FORMAT_B8G8R8A8_UNORM_SRGB:
+			descClone.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+			break;
+		case OVR_FORMAT_B8G8R8X8_UNORM_SRGB:
+			descClone.Format = DXGI_FORMAT_B8G8R8X8_UNORM;
+			break;
+		}
+	}	
 	
 	bool makeShaderView = false;
 	d.BindFlags = 0;

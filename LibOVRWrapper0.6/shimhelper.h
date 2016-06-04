@@ -19,6 +19,9 @@ typedef struct ovrTextureSwapChainWrapper_
 	ID3D11DeviceContext* pContext;	
 } ovrTextureSwapChainWrapper;
 
+WrapperSettings* getWrapperSettings();
+void setWrapperSettings(WrapperSettings* settings);
+
 EXTERNC HRESULT wrapCreateShaderResourceView(ID3D11Device* device, ID3D11Resource* resource, ID3D11ShaderResourceView** srv);
 EXTERNC ovrTextureSwapChainWrapper* getChain(ovrSession1_3 session, ovrSwapTextureSet* ts);
 EXTERNC void setChain(ovrSession1_3 session, ovrSwapTextureSet* ts, ovrTextureSwapChainWrapper* chain);

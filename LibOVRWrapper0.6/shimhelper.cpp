@@ -12,6 +12,14 @@ extern "C" HRESULT wrapCreateShaderResourceView(ID3D11Device* device, ID3D11Reso
 
 std::unordered_map<ovrSwapTextureSet*, ovrTextureSwapChainWrapper*> *swapchains;
 ovrMirrorTexture1_3* globalMirror;
+WrapperSettings* globalWrapperSettings;
+
+WrapperSettings* getWrapperSettings() {
+	return globalWrapperSettings;
+}
+void setWrapperSettings(WrapperSettings* settings) {
+	globalWrapperSettings = settings;
+}
 
 extern "C" void setMirror(ovrMirrorTexture1_3* mirror) {
 	globalMirror = mirror;
